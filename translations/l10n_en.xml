@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<l10n>
+     <texts>
+        <text name="input_GRIDMAP3D_DBG_OCTREE_LAYER_DOWN" text="Lower octree debug layer" />
+        <text name="input_GRIDMAP3D_DBG_OCTREE_LAYER_UP" text="Increase octree debug layer" />
+	</texts>
+</l10n>

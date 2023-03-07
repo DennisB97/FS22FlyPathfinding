@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no" ?>
+<modDesc descVersion="61">
+    <author>Dennis B</author>
+    <version>1.0.0.0</version>
+
+    <title>
+        <en>Fly pathfinding "library" mod</en>
+    </title>
+
+    <description>
+        <en>3D pathfinding, to be used together with other mods that utilizes it. Not a standalone mod</en>
+    </description>
+
+    <l10n filenamePrefix="translations/l10n"/>
+    <multiplayer supported="true"/>
+
+    <extraSourceFiles>
+        <sourceFile filename="scripts/flyPathfinding.lua" />
+        <sourceFile filename="scripts/gridMap3D.lua" />
+        <sourceFile filename="scripts/states/gridMap3DStates.lua" />
+    </extraSourceFiles>
+
+    <inputBinding>
+		<actionBinding action="GRIDMAP3D_DBG_OCTREE_LAYER_DOWN">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_lalt KEY_KP_minus" />
+		</actionBinding>
+		<actionBinding action="GRIDMAP3D_DBG_OCTREE_LAYER_UP">
+			<binding device="KB_MOUSE_DEFAULT" input="KEY_lshift KEY_lalt KEY_KP_plus" />
+		</actionBinding>
+    </inputBinding>
+
+	<actions>
+		<action name="GRIDMAP3D_DBG_OCTREE_LAYER_DOWN" />
+		<action name="GRIDMAP3D_DBG_OCTREE_LAYER_UP" />
+	</actions>
+
+</modDesc>

@@ -38,7 +38,7 @@ Please refer to the game developer's website for more information.
     Overview of the arrangment of the 4x4x4 size leaf voxels in the octree divided into two 32bit.
     1st layer and 2nd layer     |12| |8 | |4| |0|  |28| |24| |20| |16|  3rd layer and 4th layer |12| |8 | |4| |0|   |28| |24| |20| |16|
     leafVoxelsBottom            |13| |9 | |5| |1|  |29| |25| |21| |17|  leafVoxelsTop           |13| |9 | |5| |1|   |29| |25| |21| |17|
-    3D Cube flattened view      |14| |10| |6| |2|  |30| |26| |22| |18|                          |14| |10| |6| |2|   |30| |26| |22| |18|
+    3D Cube sliced view         |14| |10| |6| |2|  |30| |26| |22| |18|                          |14| |10| |6| |2|   |30| |26| |22| |18|
                                 |15| |11| |7| |3|  |31| |27| |23| |19|                          |15| |11| |7| |3|   |31| |27| |23| |19|
 
 ]]
@@ -213,7 +213,7 @@ end
 
 --- boundaryOverlapCheckCallback Callback function of the boundaryOverlapCheck's overlapBox calls.
 -- If there is a collision with an object that has ClassIds.SHAPE then it puts it into seenIDs.
--- If a duplicate ID is found then it puts it in the owner's mapBoundaryIDs table.
+-- If a duplicate ID is found then it puts it in the owner's objectIgnoreIDs table.
 -- The overlap checks of FS22 LUA works that the return true, will tell it to keep checking for more overlaps.
 -- While returning a false would stop it from going through more overlapped objects.
 -- Here in this function all overlapped objects needs to be checked.
@@ -226,7 +226,8 @@ function GridMap3DStatePrepare:boundaryOverlapCheckCallback(hitObjectId)
 
     if getHasClassId(hitObjectId,ClassIds.SHAPE) then
         if self.seenIDs[hitObjectId] then
-            self.owner.mapBoundaryIDs[hitObjectId] = true
+            self.owner:addObjectIgnoreID(hitObjectId)
+--             self.owner.objectIgnoreIDs[hitObjectId] = true
         else
             self.seenIDs[hitObjectId] = true
         end
@@ -379,6 +380,7 @@ function GridMap3DStateGenerate:finishGrid()
     local seconds = self.generationTime % 60
     Logging.info(string.format("GridMap3DStateGenerate done generating octree! Took around %d Minutes, %d Seconds",minutes,seconds))
     -- Change state to idle
+    g_messageCenter:publish(MessageType.GRIDMAP3D_GRID_GENERATED,"testing message center")
     self.currentState = self.EInternalState.IDLE
     if self.owner ~= nil then
         self.owner:changeState(self.owner.EGridMap3DStates.IDLE)
@@ -571,13 +573,15 @@ function GridMap3DStateUpdate:receiveWork()
         return
     end
 
-    if #self.owner.gridUpdateReadyQueue < 1 then
+    if next(self.owner.gridUpdateReadyQueue) == nil then
         self.owner:changeState(self.owner.EGridMap3DStates.IDLE)
         return
     end
 
-    self.gridUpdate = self.owner.gridUpdateReadyQueue[1]
-    table.remove(self.owner.gridUpdateReadyQueue,1)
+    local nextTableValue = {next(self.owner.gridUpdateReadyQueue)}
+
+    self.gridUpdate = nextTableValue[2]
+    self.owner.gridUpdateReadyQueue[nextTableValue[1]] = nil
 
     self:getNodeToRedo()
 

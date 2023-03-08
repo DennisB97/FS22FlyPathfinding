@@ -26,32 +26,34 @@ Selling or distributing this mod for a fee or any other form of consideration is
 Please refer to the game developer's website for more information.
 ]]
 
----@class GridMap3DLatentUpdateAction enable a function to be run in sec update tick delay.
-GridMap3DLatentUpdateAction = {}
-GridMap3DLatentUpdateAction_mt = Class(GridMap3DLatentUpdateAction)
-InitObjectClass(GridMap3DLatentUpdateAction, "GridMap3DLatentUpdateAction")
+---@class GridMap3DLatentMessage enable a function to be run in sec update tick delay.
+GridMap3DLatentMessage = {}
+GridMap3DLatentMessage_mt = Class(GridMap3DLatentMessage)
+InitObjectClass(GridMap3DLatentMessage, "GridMap3DLatentMessage")
 
---- new creates a new GridMap3DLatentUpdateAction.
---@param inOwner, if the function will have a self reference this is it given to it.
---@param inFunction the function that will be run when delay has been reached.
---@param updateDelay is the delay in seconds to wait until function activation.
-function GridMap3DLatentUpdateAction.new(inOwner,inFunction,updateDelay)
-    local self = setmetatable({},GridMap3DLatentUpdateAction_mt)
-    self.latentFunction = inFunction
-    self.updateDelay = updateDelay
+--- new creates a new GridMap3DLatentMessage.
+--@param message, the MessageType message which to publish when delay reached.
+--@param messageParameters is a table given some parameters if the message published needs any.
+--@param delay is the delay in seconds to wait until message publish.
+function GridMap3DLatentMessage.new(message,messageParameters,delay)
+    local self = setmetatable({},GridMap3DLatentMessage_mt)
+    self.latentMessage = message
+    self.messageDelay = delay
+    self.messageParameters = messageParameters or {}
     self.delayCounter = 0
-    self.owner = inOwner
     self.bFinished = false
     return self
 end
 
 --- run needs to be called when wanted from update to give deltaTime to it.
--- So that it will eventually call the function provided. Sets bFinished to true when it is done.
+-- So that it will eventually call the message provided. Sets bFinished to true when it is done.
 --@param dt is deltaTime that needs to be given each update to this function.
-function GridMap3DLatentUpdateAction:run(dt)
+function GridMap3DLatentMessage:run(dt)
     self.delayCounter = self.delayCounter + dt
-    if self.delayCounter >= self.updateDelay and not self.bFinished then
-        self.latentFunction(self.owner)
+    if self.delayCounter >= self.messageDelay and not self.bFinished then
+        if g_messageCenter ~= nil then
+            g_messageCenter:publish(self.latentMessage,unpack(self.messageParameters))
+        end
         self.delayCounter = 0
         self.bFinished = true
     end
@@ -64,7 +66,7 @@ GridMap3DNode = {}
 --@param x is the center x coordinate of node.
 --@param y is the center y coordinate of node.
 --@param z is the center z coordinate of node.
---@param parent is the lower resolution parent node.
+--@param parent is the lower resolution parent node, type GridMap3DNode table.
 --@param size is full length of the square node.
 function GridMap3DNode.new(x,y,z,parent,size)
     local self = setmetatable({},nil)
@@ -88,8 +90,9 @@ function GridMap3DNode.new(x,y,z,parent,size)
     return self
 end
 
---- isSolid checks if the provided node is solid or not
---@return true if the node was solid
+--- isSolid checks if the provided node is solid or not.
+--@param node is the node to be checked, type of GridMap3DNode table.
+--@return true if the node was solid.
 function GridMap3DNode.isSolid(node)
     if node == nil then
         return true
@@ -106,14 +109,16 @@ function GridMap3DNode.isSolid(node)
     return true
 end
 
---- isLeafFullSolid checks if the provided leaf node is fully solid
---@return true if the node was fully solid
+--- isLeafFullSolid checks if the provided leaf node is fully solid.
+--@param node is the node to be checked, type of GridMap3DNode table.
+--@return true if the node was fully solid.
 function GridMap3DNode.isLeafFullSolid(node)
 
     if node == nil or GridMap3DNode.isLeaf(node) == false then
         return true
     end
 
+    -- all 32 LSB are 1, fully solid in this case
     local mask = 4294967295
 
     if node.leafVoxelsBottom == mask and node.leafVoxelsTop == mask then
@@ -123,8 +128,9 @@ function GridMap3DNode.isLeafFullSolid(node)
     return false
 end
 
---- isLeaf checks if the provided node is a leaf node
---@return true if the node was a leaf
+--- isLeaf checks if the provided node is a leaf node.
+--@param node is the node to be checked from, type GridMap3DNode table.
+--@return true if the node was a leaf.
 function GridMap3DNode.isLeaf(node)
     if node == nil then
         return false
@@ -141,6 +147,8 @@ end
 
 --- checkAABBIntersection simple helper function to find if two boxes intersect.
 -- aabb's provided as table as following , minX,minY,minZ,maxX,maxY,maxZ.
+--@param aabb1 is the first bounding box.
+--@param aabb2 is the second bounding box.
 --@return true if two provided boxes intersect.
 function GridMap3DNode.checkAABBIntersection(aabb1, aabb2)
     if aabb1 == nil or aabb2 == nil or #aabb1 ~= 6 or #aabb2 ~= 6 then
@@ -156,6 +164,10 @@ end
 
 --- checkPointInAABB simple helper function to find if a point is inside box.
 -- aabb provided as table as following , minX,minY,minZ,maxX,maxY,maxZ.
+--@param px is the point's x coordinate.
+--@param py is the point's y coordinate.
+--@param pz is the point's z coordinate.
+--@param aabb is the bounding box.
 --@return true if point is inside provided box.
 function GridMap3DNode.checkPointInAABB(px, py, pz, aabb)
     if px == nil or py == nil or pz == nil or aabb == nil or #aabb ~= 6 then
@@ -200,7 +212,11 @@ InitObjectClass(GridMap3D, "GridMap3D")
 
 
 --- new creates a new grid map 3d.
+--@param customMt optional customized base table.
 function GridMap3D.new(customMt)
+    if g_GridMap3D ~= nil then
+        return
+    end
 
     local self = Object.new(true,false, customMt or GridMap3D_mt)
     -- adds a debugging console command to visualize the octree.
@@ -217,9 +233,9 @@ function GridMap3D.new(customMt)
     self.EDirections = {X = 0, MINUSX = 1, Y = 2, MINUSY = 3, Z = 4, MINUSZ = 5}
     self.currentGridState = self.EGridMap3DStates.UNDEFINED
     -- this bool is toggled by console command to true and false
-    self.octreeDebug = false
-    -- contains the ids of the map boundaries which will be ignored and not marked as solid by the grid.
-    self.mapBoundaryIDs = {}
+    self.bOctreeDebug = false
+    -- contains the ids of the objects which will be ignored and not marked as solid by the grid.
+    self.objectIgnoreIDs = {}
     -- contains updates queued up and waiting to set to ready queue after a certain delay, as to not try to update the grid too fast as the collision might not be registered immediately.
     self.gridUpdateQueue = {}
     -- contains the updates that are ready to be updated in the grid.
@@ -234,6 +250,12 @@ function GridMap3D.new(customMt)
     self.bTraceVoxelSolid = false
     self.collisionMask = CollisionFlag.STATIC_WORLD + CollisionFlag.WATER
 
+    -- add some own messages into the g_messageCenter system, value does not matter just setting it to true, key is the important thing.
+    MessageType.GRIDMAP3D_GRID_GENERATED = true
+    MessageType.GRIDMAP3D_GRID_UPDATED = true
+    MessageType.GRIDMAP3D_GRID_UPDATEREADY = true
+
+
     -- Appends to the finalizePlacement function which is called when a placeable is placed down.
     Placeable.finalizePlacement = Utils.appendedFunction(Placeable.finalizePlacement,
         function(...)
@@ -247,6 +269,9 @@ function GridMap3D.new(customMt)
         end
     )
 
+    -- subscribe to the own UPDATEREADY message, so that the grid can be tried to be updated.
+    g_messageCenter:subscribe(MessageType.GRIDMAP3D_GRID_UPDATEREADY,GridMap3D.onGridNeedUpdate,self)
+
     -- Creates all the needed states and changes to the prepare state initially.
     table.insert(self.gridMap3DStates,GridMap3DStatePrepare.new())
     self.gridMap3DStates[self.EGridMap3DStates.PREPARE]:init(self)
@@ -257,35 +282,40 @@ function GridMap3D.new(customMt)
     table.insert(self.gridMap3DStates,GridMap3DStateUpdate.new())
     self.gridMap3DStates[self.EGridMap3DStates.UPDATE]:init(self)
 
-    -- add a function callback when grid needs an update.
-    self:addGridUpdateQueueIncreasedEvent(self,GridMap3D.onGridNeedUpdate)
-
-
     registerObjectClassName(self, "GridMap3D")
 
     return self
 end
 
+--- init the grid.
+-- changes the state to prepare.
 function GridMap3D:init()
-
     self:changeState(self.EGridMap3DStates.PREPARE)
-
-
 end
 
---- onGridNeedUpdate is a callback function for when an update has been readied for the grid.
--- Prepares a grid update into the ready queue and calls forward to change to update state.
---@param gridMap3D is the self reference which is provided.
-function GridMap3D.onGridNeedUpdate(gridMap3D)
-
-    if #gridMap3D.gridUpdateQueue < 1 then
+--- addObjectToIgnore is for adding another object to be ignored from the grid as non-solid even if it has collision.
+--@param id is the object id to be ignored.
+function GridMap3D:addObjectIgnoreID(id)
+    if id == nil or type(id) ~= "number" then
         return
     end
 
-    table.insert(gridMap3D.gridUpdateReadyQueue,gridMap3D.gridUpdateQueue[1])
-    table.remove(gridMap3D.gridUpdateQueue,1)
+    self.objectIgnoreIDs[id] = true
+end
 
-    gridMap3D:changeState(gridMap3D.EGridMap3DStates.UPDATE)
+
+--- onGridNeedUpdate is a callback function for when an update has been readied for the grid.
+-- Prepares a grid update into the ready queue and calls forward to change to update state.
+function GridMap3D:onGridNeedUpdate()
+    if next(self.gridUpdateQueue) == nil then
+        return
+    end
+
+    local _i, readyUpdate = next(self.gridUpdateQueue)
+    self.gridUpdateReadyQueue[readyUpdate.id] = readyUpdate
+    self.gridUpdateQueue[readyUpdate.id] = nil
+
+    self:changeState(self.EGridMap3DStates.UPDATE)
 end
 
 --- delete function handles cleaning up the grid.
@@ -304,6 +334,8 @@ function GridMap3D:delete()
 
     end
 
+    g_messageCenter:unsubscribe(MessageType.GRIDMAP3D_GRID_UPDATEREADY,self)
+
     self.gridMap3DStates = nil
     self.nodeTree = nil
 
@@ -320,17 +352,18 @@ function GridMap3D:delete()
 end
 
 --- getVectorDistance tiny helper function to get the distance between two vectors.
---@param x is the first vector's x coordinate
---@param y is the first vector's y coordinate
---@param z is the first vector's z coordinate
---@param x2 is the second vector's x coordinate
---@param y2 is the second vector's y coordinate
---@param z2 is the second vector's z coordinate
+--@param x is the first vector's x coordinate.
+--@param y is the first vector's y coordinate.
+--@param z is the first vector's z coordinate.
+--@param x2 is the second vector's x coordinate.
+--@param y2 is the second vector's y coordinate.
+--@param z2 is the second vector's z coordinate.
 function GridMap3D.getVectorDistance(x,y,z,x2,y2,z2)
     return math.sqrt(math.pow((x - x2),2) + math.pow((y - y2),2) + math.pow((z - z2),2))
 end
 
---- changeState changes the
+--- changeState changes the grid's state.
+--@param newState is the state to try change into. type of self.EGridMap3DStates table, where state is just a number.
 function GridMap3D:changeState(newState)
 
     if newState == nil or newState == 0 then
@@ -342,16 +375,18 @@ function GridMap3D:changeState(newState)
         return
     end
 
-
+    -- can't change into update if it is still generating
+    if newState == self.EGridMap3DStates.UPDATE and self.currentGridState == self.EGridMap3DStates.GENERATE then
+        return
     -- if there is work queued when returning to idle should set to update state instead
-    if self.currentGridState ~= self.EGridMap3DStates.GENERATE and #self.gridUpdateReadyQueue > 0 then
+    elseif newState == self.EGridMap3DStates.IDLE and next(self.gridUpdateReadyQueue) ~= nil then
         newState = self.EGridMap3DStates.UPDATE
-    end
     -- if debug is on then when returning to idle should set to debug state instead
-    if newState == self.EGridMap3DStates.IDLE and self.octreeDebug then
+    elseif newState == self.EGridMap3DStates.IDLE and self.bOctreeDebug then
         newState = self.EGridMap3DStates.DEBUG
     end
 
+    -- leave current state if a valid state object
     if self.gridMap3DStates[self.currentGridState] ~= nil then
         self.gridMap3DStates[self.currentGridState]:leave()
     end
@@ -364,46 +399,9 @@ function GridMap3D:changeState(newState)
 
 end
 
-function GridMap3D:addGridUpdateQueueIncreasedEvent(inOwner,callbackFunction)
-
-    if callbackFunction == nil then
-        return
-    end
-
-    for _,existingEventFunction in pairs(self.onGridUpdateQueueIncreasedEvent) do
-
-        if existingEventFunction.callbackFunction == callbackFunction then
-            Logging.warning("Existing queue increased event callback in GridMap3D:addGridUpdateQueueIncreasedEvent()!")
-            return
-        end
-    end
-
-    table.insert(self.onGridUpdateQueueIncreasedEvent,{owner = inOwner,callbackFunction = callbackFunction})
-end
-
-function GridMap3D:removeGridUpdateQueueIncreasedEvent(inOwner,callbackFunction)
-
-    if inOwner == nil and callbackFunction == nil then
-        return
-    end
-
-    local toRemove = {}
-    for i,existingEventFunction in ipairs(self.onGridUpdateQueueIncreasedEvent) do
-
-        -- if no specific function given then removes all from the provided owner
-        if existingEventFunction.owner == inOwner and callbackFunction == nil then
-            table.insert(toRemove,i)
-        elseif existingEventFunction.callbackFunction == callbackFunction then
-            table.insert(toRemove,i)
-        end
-    end
-
-    for i = #toRemove, 1, -1 do
-        table.remove(self.onGridUpdateQueueIncreasedEvent,toRemove[i])
-    end
-
-end
-
+--- update as the GridMap3D is based on an FS22 Object, it has the update function which is called as long as raiseActive() is called on the object.
+-- Here it forwards the update to valid current state, runs any latentUpdates if exists.
+--@param dt is the deltaTime received every update.
 function GridMap3D:update(dt)
     GridMap3D:superClass().update(self,dt)
 
@@ -427,7 +425,9 @@ function GridMap3D:update(dt)
     end
 end
 
-
+--- QueueGridUpate is called to queue a grid update.
+-- The grid update received is inserted into a latent update action.
+--@param newWork is the created update prepared for the octree.
 function GridMap3D:QueueGridUpdate(newWork)
 
     if newWork == nil then
@@ -435,43 +435,40 @@ function GridMap3D:QueueGridUpdate(newWork)
     end
 
     -- if the same object has been queued before, it means this time it has been deleted before the grid has been updated so deletes and returns
-    for i,gridUpdate in ipairs(self.gridUpdateQueue) do
-        if gridUpdate.id == newWork.id then
-            table.remove(self.gridUpdateQueue,i)
-            return
-        end
-    end
-    for i,gridUpdate in ipairs(self.gridUpdateReadyQueue) do
-        if gridUpdate.id == newWork.id then
-            table.remove(self.gridUpdateReadyQueue,i)
-            return
-        end
+    if self.gridUpdateQueue[newWork.id] ~= nil then
+        self.gridUpdateQueue[newWork.id] = nil
+        return
+    elseif self.gridUpdateReadyQueue[newWork.id] ~= nil then
+        self.gridUpdateReadyQueue[newWork.id] = nil
+        return
     end
 
+    self.gridUpdateQueue[newWork.id] = newWork
 
-    table.insert(self.gridUpdateQueue,newWork)
-
-    local newLatentUpdate = GridMap3DLatentUpdateAction.new(self,
-        function()
-            for _, eventFunction in pairs(self.onGridUpdateQueueIncreasedEvent) do
-                eventFunction.callbackFunction(eventFunction.owner)
-            end
-        end
-    ,1)
+    local newLatentUpdate = GridMap3DLatentMessage.new(MessageType.GRIDMAP3D_GRID_UPDATEREADY,nil,1)
 
     table.insert(self.latentUpdates,newLatentUpdate)
-
 end
 
+--- onPlaceablePlaced is appended into the Placeable:onFinalizePlacement function.
+-- forwards the placeable ref to the function that handles creating an update for octree.
+--@param placeable is the reference to the placeable which has been placed.
 function GridMap3D:onPlaceablePlaced(placeable)
     self:onPlaceableModified(placeable,false)
 end
 
+--- onPlaceableSolid is prepended into the Placeable:onSell function.
+-- forwards the placeable ref to the function that handles creating an update for octree.
+--@param placeable is the reference to the placeable which is being sold.
 function GridMap3D:onPlaceableSold(placeable)
     self:onPlaceableModified(placeable,true)
 end
 
-
+--- onPlaceableModified is called for when a placeable gets sold or placed in the game world.
+-- Used to catch the information needed to update the octree with the new or removed placeable.
+-- Needs to be checked if it is a fence and skipped as they are dumbly programmed, where they actually call finalizePlacement even without placing them...
+--@param placeable is the self reference of the placeable sold or added.
+--@param isDeletion is a bool indicating if it is being sold/deleted or placed.
 function GridMap3D:onPlaceableModified(placeable,isDeletion)
 
     if not self.bActivated or placeable == nil or placeable.rootNode == nil or placeable.spec_fence ~= nil then
@@ -517,6 +514,9 @@ function GridMap3D:onPlaceableModified(placeable,isDeletion)
 
 end
 
+--- getNodeTreeLayer is a helper function to get which layer the current sized node is at.
+-- Where layer 1 has only one node and is the root node of the octree.
+--@return a number of octree layer between 1 - n
 function GridMap3D:getNodeTreeLayer(size)
     if size < 1 or size == nil then
         return 1
@@ -558,7 +558,7 @@ end
 --@param hitObjectId is the id of collided thing.
 function GridMap3D:voxelOverlapCheckCallback(hitObjectId)
 
-    if hitObjectId < 1 or hitObjectId == g_currentMission.terrainRootNode or self.mapBoundaryIDs[hitObjectId] then
+    if hitObjectId < 1 or hitObjectId == g_currentMission.terrainRootNode or self.objectIgnoreIDs[hitObjectId] then
         return true
     end
 
@@ -566,7 +566,6 @@ function GridMap3D:voxelOverlapCheckCallback(hitObjectId)
     if getHasClassId(hitObjectId,ClassIds.SHAPE) and bitAND(getCollisionMask(hitObjectId),CollisionFlag.TREE) ~= CollisionFlag.TREE  then
         self.bTraceVoxelSolid = true
         return false
-
     end
 
     return true
@@ -744,7 +743,7 @@ end
 -- Also sets the outside neighbours opposite direction neighbour as the currently checked node.
 --@param neighbourChildNumber is the child number which is suppose to be linked to the node.
 --@param direction is the direction the neighbour is being checked from.
---@param node is the current node which has its neighbours linked.
+--@param node is the current node which has its neighbours linked, type of GridMap3DNode table.
 function GridMap3D:findOutsideNeighbours(neighbourChildNumber,direction,node)
 
     if node == nil or direction == nil or neighbourChildNumber < 1 or neighbourChildNumber > 8 then
@@ -859,18 +858,19 @@ function GridMap3D:findOutsideNeighbours(neighbourChildNumber,direction,node)
 end
 
 
-
+--- octreeDebugToggle is function bound to debugging console command.
+-- Toggles the bOctreeDebug, which then when state goes to idle replcaes idle state with debug state.
 function GridMap3D:octreeDebugToggle()
 
     if self == nil then
         return
     end
 
-    self.octreeDebug = not self.octreeDebug
+    self.bOctreeDebug = not self.bOctreeDebug
 
-    if self.octreeDebug and self.currentGridState == self.EGridMap3DStates.IDLE then
+    if self.bOctreeDebug and self.currentGridState == self.EGridMap3DStates.IDLE then
         self:changeState(self.EGridMap3DStates.DEBUG)
-    elseif not self.octreeDebug and self.currentGridState == self.EGridMap3DStates.DEBUG then
+    elseif not self.bOctreeDebug and self.currentGridState == self.EGridMap3DStates.DEBUG then
         self:changeState(self.EGridMap3DStates.IDLE)
     end
 

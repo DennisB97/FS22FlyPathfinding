@@ -26,6 +26,208 @@ Selling or distributing this mod for a fee or any other form of consideration is
 Please refer to the game developer's website for more information.
 ]]
 
+local findNeighboursTable = {
+        [1] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].xNeighbour,-1}
+            end
+            return {node[1],node[2] + 1}
+
+            end,
+        [2] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].zNeighbour,-1}
+            end
+            return {node[1],node[2] + 4}
+
+            end,
+        [3] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].xMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 1}
+
+            end,
+        [4] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].zMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 4}
+
+            end,
+        [5] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].yNeighbour,-1}
+            end
+            return {node[1],node[2] + 16}
+
+            end,
+        [6] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].yMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 16}
+
+            end,
+        [7] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].yMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 16}
+
+            end,
+        [8] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].yMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 16}
+
+            end,
+    }
+
+local findExternalNeighboursTable = {
+        [1] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].xNeighbour,-1}
+            end
+            return {node[1],node[2] + 1}
+
+            end,
+        [2] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].zNeighbour,-1}
+            end
+            return {node[1],node[2] + 4}
+
+            end,
+        [3] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].xMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 1}
+
+            end,
+        [4] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].zMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 4}
+
+            end,
+        [5] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].yNeighbour,-1}
+            end
+            return {node[1],node[2] + 16}
+
+            end,
+        [6] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].yMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 16}
+
+            end,
+        [7] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].yMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 16}
+
+            end,
+        [8] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] < 0 then
+                return {nil,-1}
+            end
+
+            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
+            if wallLeafNodes[node[2]] ~= nil then
+                return {node[1].yMinusNeighbour,-1}
+            end
+            return {node[1],node[2] - 16}
+
+            end,
+    }
+
+
+
+
+
 ---@class GridMap3DLatentMessage enable a function to be run in sec update tick delay.
 GridMap3DLatentMessage = {}
 GridMap3DLatentMessage_mt = Class(GridMap3DLatentMessage)
@@ -109,12 +311,67 @@ function GridMap3DNode.isSolid(node)
     return true
 end
 
+function GridMap3DNode.isLeafVoxelSolidAt(node,index)
+    if node == nil or index == nil then
+        return false
+    end
+
+    if index > 31 then
+
+        local bitState = bitAND(math.floor(node.leafVoxelsTop / (math.pow(2,index - 32))), 1)
+        if bitState ~= 0 then
+            return true
+        end
+
+    else
+
+        local bitState = bitAND(math.floor(node.leafVoxelsBottom / (math.pow(2,index))), 1)
+        if bitState ~= 0 then
+            return true
+        end
+
+    end
+
+
+    return false
+end
+
+function GridMap3DNode.isUnderTerrain(node)
+    if node == nil then
+        return true
+    end
+
+    if node.leafVoxelsBottom == nil and node.leafVoxelsBottom == -1 then
+        return true
+    end
+
+    return false
+end
+
+
+function GridMap3DNode.getLeafVoxelLocation(node,index)
+    if node == nil or g_GridMap3D == nil or index == nil or index < 0 or index > 63 then
+        return 0,0,0
+    end
+
+    local startPositionX = node.positionX - g_GridMap3D.maxVoxelResolution - (g_GridMap3D.maxVoxelResolution / 2)
+    local startPositionY = node.positionY - g_GridMap3D.maxVoxelResolution - (g_GridMap3D.maxVoxelResolution / 2)
+    local startPositionZ = node.positionZ - g_GridMap3D.maxVoxelResolution - (g_GridMap3D.maxVoxelResolution / 2)
+
+    local yIndex = math.floor(index / 16)
+    local zIndex = math.floor((index - (yIndex * 16)) / 4)
+    local xIndex = index - (yIndex * 16) - (zIndex * 4)
+    return startPositionX + (g_GridMap3D.maxVoxelResolution * xIndex), startPositionY + (g_GridMap3D.maxVoxelResolution * yIndex), startPositionZ + (g_GridMap3D.maxVoxelResolution * zIndex)
+
+end
+
+
 --- isLeafFullSolid checks if the provided leaf node is fully solid.
 --@param node is the node to be checked, type of GridMap3DNode table.
 --@return true if the node was fully solid.
 function GridMap3DNode.isLeafFullSolid(node)
 
-    if node == nil or GridMap3DNode.isLeaf(node) == false then
+    if node == nil then
         return true
     end
 
@@ -180,6 +437,25 @@ function GridMap3DNode.checkPointInAABB(px, py, pz, aabb)
         return false
     end
 end
+
+--- getRandomPoint is called to receive a random x,y,z location within the node provided.
+--@param node is the node within a location is received.
+--@return x,y,z coordinates of a point within the node.
+function GridMap3DNode.getRandomPoint(node)
+
+    if node == nil then
+        return 0,0,0
+    end
+
+    local randomX = math.random(node.positionX - (node.size/2), node.positionX + (node.size/2))
+    local randomY = math.random(node.positionY - (node.size/2), node.positionY + (node.size/2))
+    local randomZ = math.random(node.positionZ - (node.size/2), node.positionZ + (node.size/2))
+
+    return randomX,randomY,randomZ
+
+end
+
+
 
 ---@class GridMap3DUpdate exists for creating an update table for the grid reacting to deletion or creation of a placeable.
 GridMap3DUpdate = {}
@@ -248,12 +524,22 @@ function GridMap3D.new(customMt)
     self.latentUpdates = {}
     -- used by the grid states to know if collision check was solid, set in the trace callback
     self.bTraceVoxelSolid = false
+    self.bUnderTerrain = false
+
     self.collisionMask = CollisionFlag.STATIC_WORLD + CollisionFlag.WATER
 
-    -- add some own messages into the g_messageCenter system, value does not matter just setting it to true, key is the important thing.
-    MessageType.GRIDMAP3D_GRID_GENERATED = true
-    MessageType.GRIDMAP3D_GRID_UPDATED = true
-    MessageType.GRIDMAP3D_GRID_UPDATEREADY = true
+    -- Need to find the highest value in the messagetype , as own inserted ones need to be higher
+    local messageTypeCount = 0
+    for _,message in pairs(MessageType) do
+        if type(message) == "number" then
+            if message > messageTypeCount then
+                messageTypeCount = message
+            end
+        end
+    end
+    MessageType.GRIDMAP3D_GRID_GENERATED = messageTypeCount + 1
+    MessageType.GRIDMAP3D_GRID_UPDATED = messageTypeCount + 2
+    MessageType.GRIDMAP3D_GRID_UPDATEREADY = messageTypeCount + 3
 
 
     -- Appends to the finalizePlacement function which is called when a placeable is placed down.
@@ -290,7 +576,21 @@ end
 --- init the grid.
 -- changes the state to prepare.
 function GridMap3D:init()
-    self:changeState(self.EGridMap3DStates.PREPARE)
+
+    if g_currentMission ~= nil then
+
+        -- overlapBox seems to have some bug with non default sized maps.
+        if getTerrainSize(g_currentMission.terrainRootNode) ~= 2048 then
+            Logging.info("The FlyPathfinding mod does not work on non-default sized maps!")
+            self.currentGridState = self.EGridMap3DStates.UNDEFINED
+            return false
+        end
+
+        self:changeState(self.EGridMap3DStates.PREPARE)
+
+    end
+
+    return true
 end
 
 --- addObjectToIgnore is for adding another object to be ignored from the grid as non-solid even if it has collision.
@@ -302,6 +602,17 @@ function GridMap3D:addObjectIgnoreID(id)
 
     self.objectIgnoreIDs[id] = true
 end
+
+--- removeObjectToIgnore is for removing another object that had been set to be ignored from the grid as non-solid even if it has collision.
+--@param id is the object id to remove from ignore list.
+function GridMap3D:removeObjectIgnoreID(id)
+    if id == nil or type(id) ~= "number" then
+        return
+    end
+
+    self.objectIgnoreIDs[id] = nil
+end
+
 
 
 --- onGridNeedUpdate is a callback function for when an update has been readied for the grid.
@@ -334,7 +645,9 @@ function GridMap3D:delete()
 
     end
 
-    g_messageCenter:unsubscribe(MessageType.GRIDMAP3D_GRID_UPDATEREADY,self)
+    if g_messageCenter ~= nil then
+        g_messageCenter:unsubscribe(MessageType.GRIDMAP3D_GRID_UPDATEREADY,self)
+    end
 
     self.gridMap3DStates = nil
     self.nodeTree = nil
@@ -366,8 +679,14 @@ end
 --@param newState is the state to try change into. type of self.EGridMap3DStates table, where state is just a number.
 function GridMap3D:changeState(newState)
 
-    if newState == nil or newState == 0 then
+    if newState == nil or type(newState) ~= "number" then
         Logging.warning("Not a valid state given to GridMap3D:changeState() _ ".. tostring(newState))
+        return
+    end
+
+    if newState == 0 then
+        Logging.info("GridMap3D is going to undefined state! Issue occured somewhere!")
+        self.currentGridState = self.EGridMap3DStates.UNDEFINED
         return
     end
 
@@ -537,6 +856,7 @@ end
 --@return true if was a collision on checked location
 function GridMap3D:voxelOverlapCheck(x,y,z, extentRadius)
     self.bTraceVoxelSolid = false
+    self.bUnderTerrain = false
 
     local terrainHeight = 0
     if g_currentMission.terrainRootNode ~= nil then
@@ -544,6 +864,7 @@ function GridMap3D:voxelOverlapCheck(x,y,z, extentRadius)
     end
 
     if y + extentRadius < terrainHeight then
+        self.bUnderTerrain = true
         return
     end
 
@@ -594,48 +915,23 @@ function GridMap3D:createLeafVoxels(parent)
         return
     end
 
+    for i = 0, 31 do
 
-    local startPositionX = parent.positionX - self.maxVoxelResolution - (self.maxVoxelResolution / 2)
-    local startPositionY = parent.positionY - self.maxVoxelResolution - (self.maxVoxelResolution / 2)
-    local startPositionZ = parent.positionZ - self.maxVoxelResolution - (self.maxVoxelResolution / 2)
-
-    local count = 0
-    for y = 0, 1 do
-        for z = 0 , 3 do
-            for x = 0, 3 do
-                local currentPositionX = startPositionX + (self.maxVoxelResolution * x)
-                local currentPositionY = startPositionY + (self.maxVoxelResolution * y)
-                local currentPositionZ = startPositionZ + (self.maxVoxelResolution * z)
-                self:voxelOverlapCheck(currentPositionX,currentPositionY,currentPositionZ,self.maxVoxelResolution / 2)
-
-                -- if voxel was solid then set the bit to 1
-                if self.bTraceVoxelSolid == true then
-                    parent.leafVoxelsBottom = bitOR(parent.leafVoxelsBottom,( 1 * 2^count))
-                end
-
-                count = count + 1
-            end
+        local posX,posY,posZ = GridMap3DNode.getLeafVoxelLocation(parent,i)
+        self:voxelOverlapCheck(posX,posY,posZ,self.maxVoxelResolution / 2)
+        -- if voxel was solid then set the bit to 1
+        if self.bTraceVoxelSolid == true then
+            parent.leafVoxelsBottom = bitOR(parent.leafVoxelsBottom,( 1 * 2^i))
         end
     end
 
 
-    count = 0
-    for y = 2, 3 do
-        for z = 0 , 3 do
-            for x = 0, 3 do
-                local currentPositionX = startPositionX + (self.maxVoxelResolution * x)
-                local currentPositionY = startPositionY + (self.maxVoxelResolution * y)
-                local currentPositionZ = startPositionZ + (self.maxVoxelResolution * z)
-                self:voxelOverlapCheck(currentPositionX,currentPositionY,currentPositionZ,self.maxVoxelResolution / 2)
-
-                -- if voxel was solid then set the bit to 1
-                if self.bTraceVoxelSolid == true then
-                    parent.leafVoxelsTop = bitOR(parent.leafVoxelsTop,( 1 * 2^count))
-                end
-
-                count = count + 1
-
-            end
+    for i = 32, 63 do
+        local posX,posY,posZ = GridMap3DNode.getLeafVoxelLocation(parent,i)
+        self:voxelOverlapCheck(posX,posY,posZ,self.maxVoxelResolution / 2)
+        -- if voxel was solid then set the bit to 1
+        if self.bTraceVoxelSolid == true then
+            parent.leafVoxelsBottom = bitOR(parent.leafVoxelsBottom,( 1 * 2^i))
         end
     end
 

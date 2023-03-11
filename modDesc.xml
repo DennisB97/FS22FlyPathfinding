@@ -18,6 +18,7 @@
         <sourceFile filename="scripts/flyPathfinding.lua" />
         <sourceFile filename="scripts/gridMap3D.lua" />
         <sourceFile filename="scripts/states/gridMap3DStates.lua" />
+        <sourceFile filename="scripts/aStar.lua" />
     </extraSourceFiles>
 
     <inputBinding>

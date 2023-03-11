@@ -35,7 +35,10 @@ end
 function FlyPathfinding:loadMapData(xmlFile)
 	
     if g_GridMap3D ~= nil then
-        g_GridMap3D:init()
+        if g_GridMap3D:init() == false then
+            g_GridMap3D:delete()
+            g_GridMap3D = nil
+        end
     end
 
 end

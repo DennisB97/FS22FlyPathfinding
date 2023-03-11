@@ -146,7 +146,6 @@ function GridMap3DStatePrepare:prepareGrid()
         self.owner.terrainSize = Utils.getNoNil(getTerrainSize(g_currentMission.terrainRootNode),self.owner.terrainSize)
     end
 
-
     local tileCount = self.owner.terrainSize / self.owner.maxVoxelResolution
 
     -- Making sure the terrain size divides evenly, else add a bit extra space.
@@ -168,7 +167,7 @@ end
 -- So this function calls forward to overlapBox each 4 map edges three times along the edge.
 function GridMap3DStatePrepare:findBoundaries()
 
-    -- Get the extermities of the map.
+    -- Get the extremities of the map.
     local minX,maxX,minZ,maxZ = 0 - self.owner.terrainSize / 2, 0 + self.owner.terrainSize / 2, 0 - self.owner.terrainSize / 2, 0 + self.owner.terrainSize / 2
     -- Taking a decent sized extent box to test with so that it certainly finds the boundary, also default map has double boundaries to find them both.
     --                          Corner     Middle edge        Corner
@@ -227,7 +226,6 @@ function GridMap3DStatePrepare:boundaryOverlapCheckCallback(hitObjectId)
     if getHasClassId(hitObjectId,ClassIds.SHAPE) then
         if self.seenIDs[hitObjectId] then
             self.owner:addObjectIgnoreID(hitObjectId)
---             self.owner.objectIgnoreIDs[hitObjectId] = true
         else
             self.seenIDs[hitObjectId] = true
         end
@@ -380,7 +378,7 @@ function GridMap3DStateGenerate:finishGrid()
     local seconds = self.generationTime % 60
     Logging.info(string.format("GridMap3DStateGenerate done generating octree! Took around %d Minutes, %d Seconds",minutes,seconds))
     -- Change state to idle
-    g_messageCenter:publish(MessageType.GRIDMAP3D_GRID_GENERATED,"testing message center")
+    g_messageCenter:publish(MessageType.GRIDMAP3D_GRID_GENERATED)
     self.currentState = self.EInternalState.IDLE
     if self.owner ~= nil then
         self.owner:changeState(self.owner.EGridMap3DStates.IDLE)
@@ -463,7 +461,10 @@ function GridMap3DStateGenerate:createChildren(parent)
 
     -- Need to check for a collision if no collision then current node is childless node but not a leaf
     self.owner:voxelOverlapCheck(parent.positionX,parent.positionY,parent.positionZ,parent.size / 2)
-    if self.owner.bTraceVoxelSolid == false then
+    if self.owner.bUnderTerrain == true then
+        parent.leafVoxelsTop = -1
+        return
+    elseif self.owner.bTraceVoxelSolid == false then
         return
     end
 
@@ -551,6 +552,7 @@ function GridMap3DStateUpdate:update(dt)
             return
         else
             Logging.info("Updated GridMap3D")
+            g_messageCenter:publish(MessageType.GRIDMAP3D_GRID_UPDATED)
             self:receiveWork()
             return
         end
@@ -926,48 +928,13 @@ function GridMap3DStateDebug:renderOctreeDebugView()
 
             if GridMap3DNode.isSolid(node) and GridMap3DNode.isLeaf(node) then
 
-                local childNumber = 0
-                local startPositionX = node.positionX - self.owner.maxVoxelResolution - (self.owner.maxVoxelResolution / 2)
-                local startPositionY = node.positionY - self.owner.maxVoxelResolution - (self.owner.maxVoxelResolution / 2)
-                local startPositionZ = node.positionZ - self.owner.maxVoxelResolution - (self.owner.maxVoxelResolution / 2)
+                for i = 0, 63 do
 
-                for y = 0, 1 do
-                    for z = 0 , 3 do
-                        for x = 0, 3 do
-                            local currentPositionX = startPositionX + (self.owner.maxVoxelResolution * x)
-                            local currentPositionY = startPositionY + (self.owner.maxVoxelResolution * y)
-                            local currentPositionZ = startPositionZ + (self.owner.maxVoxelResolution * z)
-
-                            -- get the bit state and only render if it is a 1 == solid
-                            local bitState = bitAND(math.floor(node.leafVoxelsBottom / (math.pow(2,childNumber))), 1)
-                            if bitState ~= 0 then
-                                DebugUtil.drawSimpleDebugCube(currentPositionX, currentPositionY, currentPositionZ, self.owner.maxVoxelResolution, 1, 0, 0)
-                            end
-
-                            childNumber = childNumber + 1
-                        end
+                    if GridMap3DNode.isLeafVoxelSolidAt(node,i) then
+                        local posX,posY,posZ = GridMap3DNode.getLeafVoxelLocation(node,i)
+                        DebugUtil.drawSimpleDebugCube(posX, posY, posZ, self.owner.maxVoxelResolution, 1, 0, 0)
                     end
                 end
-
-                childNumber = 0
-                for y = 2, 3 do
-                    for z = 0 , 3 do
-                        for x = 0, 3 do
-                            local currentPositionX = startPositionX + (self.owner.maxVoxelResolution * x)
-                            local currentPositionY = startPositionY + (self.owner.maxVoxelResolution * y)
-                            local currentPositionZ = startPositionZ + (self.owner.maxVoxelResolution * z)
-
-                            -- get the bit state and only render if it is a 1 == solid
-                            local bitState = bitAND(math.floor(node.leafVoxelsTop / (math.pow(2,childNumber))), 1)
-                            if bitState ~= 0 then
-                                DebugUtil.drawSimpleDebugCube(currentPositionX, currentPositionY, currentPositionZ, self.owner.maxVoxelResolution, 1, 0, 0)
-                            end
-
-                            childNumber = childNumber + 1
-                        end
-                    end
-                end
-
             end
 
         end

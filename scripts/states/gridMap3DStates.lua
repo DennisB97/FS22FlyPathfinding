@@ -41,6 +41,10 @@ Please refer to the game developer's website for more information.
     3D Cube sliced view         |14| |10| |6| |2|  |30| |26| |22| |18|                          |14| |10| |6| |2|   |30| |26| |22| |18|
                                 |15| |11| |7| |3|  |31| |27| |23| |19|                          |15| |11| |7| |3|   |31| |27| |23| |19|
 
+																				If would not		        |44| |40| |36| |32|   |60| |56| |52| |48|
+																				be divided into two	        |45| |41| |37| |33|   |61| |57| |53| |49|
+																				variables would look like:  |46| |42| |38| |34|   |62| |58| |54| |50|
+                                                                                                            |47| |43| |39| |35|   |63| |59| |55| |51|					
 ]]
 
 
@@ -171,16 +175,16 @@ function GridMap3DStatePrepare:findBoundaries()
     local minX,maxX,minZ,maxZ = 0 - self.owner.terrainSize / 2, 0 + self.owner.terrainSize / 2, 0 - self.owner.terrainSize / 2, 0 + self.owner.terrainSize / 2
     -- Taking a decent sized extent box to test with so that it certainly finds the boundary, also default map has double boundaries to find them both.
     --                          Corner     Middle edge        Corner
-    self:boundaryOverlapCheck(minX,0,minZ,  0,0,minZ,         maxX,0,minZ, self.owner.terrainSize / 3,self.owner.terrainSize / 2,100)
+    self:boundaryOverlapCheck(minX,0,minZ,  0,0,minZ,         maxX,0,minZ, self.owner.terrainSize / 3,self.owner.terrainSize / 2,50)
 
     --                          Corner     Middle edge        Corner
-    self:boundaryOverlapCheck(minX,0,maxZ,  0,0,maxZ,         maxX,0,maxZ, self.owner.terrainSize / 3,self.owner.terrainSize / 2,100)
+    self:boundaryOverlapCheck(minX,0,maxZ,  0,0,maxZ,         maxX,0,maxZ, self.owner.terrainSize / 3,self.owner.terrainSize / 2,50)
 
     --                          Corner     Middle edge        Corner
-    self:boundaryOverlapCheck(minX,0,minZ,  minX,0,0,         minX,0,maxZ, 100,self.owner.terrainSize / 2, self.owner.terrainSize / 3)
+    self:boundaryOverlapCheck(minX,0,minZ,  minX,0,0,         minX,0,maxZ, 50,self.owner.terrainSize / 2, self.owner.terrainSize / 3)
 
     --                          Corner     Middle edge        Corner
-    self:boundaryOverlapCheck(maxX,0,minZ,  maxX,0,0,         maxX,0,maxZ, 100,self.owner.terrainSize / 2, self.owner.terrainSize / 3)
+    self:boundaryOverlapCheck(maxX,0,minZ,  maxX,0,0,         maxX,0,maxZ, 50,self.owner.terrainSize / 2, self.owner.terrainSize / 3)
 
 
 end
@@ -247,16 +251,10 @@ InitObjectClass(GridMap3DStateGenerate, "GridMap3DStateGenerate")
 function GridMap3DStateGenerate.new(customMt)
     local self = GridMap3DStateGenerate:superClass().new(customMt or GridMap3DStateGenerate_mt)
 
-    self.dynamicLoopLimit = 1
-    self.dynamicLoopRemove = 2
-    self.dynamicLoopAdd = 1
-    self.targetFPS = 0
     self.currentNodeIndex = 1
     self.generationTime = 0
-    self.EInternalState = {UNDEFINED = -1 , GETFPS = 0 ,CREATE = 1, EXTERNALNEIGHBOURS = 2 ,IDLE = 3}
-    self.currentState = self.EInternalState.GETFPS
-    self.fiveSecondFPSLog = {}
-    self.FPSLogAmount = 5
+    self.EInternalState = {UNDEFINED = -1 , PRELOOP = 0, CREATE = 1, EXTERNALNEIGHBOURS = 2 ,FINISH = 3 ,IDLE = 4}
+    self.currentState = self.EInternalState.PRELOOP
     self.currentLayerNodes = {}
     self.nextLayerNodes = {}
 
@@ -275,6 +273,19 @@ function GridMap3DStateGenerate:enter()
         table.insert(self.currentLayerNodes,rootNode)
     end
 
+end
+
+function GridMap3DStateGenerate:preLoop()
+    if self.owner == nil then
+        return
+    end
+
+    self.currentState = self.EInternalState.CREATE
+    for i = 0, self.owner.maxOctreePreLoops do
+        if self:iterateOctree() then
+            return
+        end
+    end
 
 end
 
@@ -292,95 +303,76 @@ function GridMap3DStateGenerate:destroy()
 end
 
 --- update for this state handles looping few times per update constructing the octree.
--- tries to keep the FPS at a targetFPS, calculated by an average FPS of the first five seconds in to the game.
 --@param dt deltaTime forwarded from the owner update function.
 function GridMap3DStateGenerate:update(dt)
     GridMap3DStateGenerate:superClass().update(self,dt)
+    if self.owner == nil then
+        return
+    end
 
+    -- initially once on game start in PRELOOP state, where a certain amount of the octree is created immediately (gets stuck for few seconds on loading screen after enter is pressed)
+    if self.currentState == self.EInternalState.PRELOOP then
+        self:preLoop()
+        return
+    end
 
     -- accumulate time
     self.generationTime = self.generationTime + (dt / 1000)
 
-    -- initially once on game start in GETFPS state, where the average FPS is measured and then target FPS is set.
-    if self.currentState == self.EInternalState.GETFPS then
-
-        -- every second passed, take in fps value.
-        if self.generationTime >= 1 then
-            self.generationTime = 0
-            table.insert(self.fiveSecondFPSLog,1 / (dt / 1000))
-            -- If enough fps's gathered as per FPSLogAmount, then can take the average and get the targetFPS.
-            if #self.fiveSecondFPSLog == self.FPSLogAmount then
-
-                self.targetFPS = (self.fiveSecondFPSLog[1] + self.fiveSecondFPSLog[2] + self.fiveSecondFPSLog[3] + self.fiveSecondFPSLog[4] + self.fiveSecondFPSLog[5]) / self.FPSLogAmount
-
-                -- depending on if there is a frameLimit on, either setting -1 from frameLimit or if fps is already lower than the limit then just averageFPS - 1.
-                if g_gameSettings.frameLimit > 0 and self.targetFPS >= g_gameSettings.frameLimit then
-                    self.targetFPS = g_gameSettings.frameLimit - 1
-                else
-                    if self.targetFPS > 60 then
-                        self.targetFPS = 59
-                    elseif self.targetFPS < 30 then
-                        self.targetFPS = 29
-                    else
-                        self.targetFPS = self.targetFPS - 1
-                    end
-                end
-                Logging.info(string.format("Target FPS to keep while generating 3D grid is: %d",self.targetFPS))
-                self.fiveSecondFPSLog = nil
-                -- Change to internal create state
-                self.currentState = self.EInternalState.CREATE
-                return
-            end
-        end
-
-        return
+    if self.currentState == self.EInternalState.FINISH then
+        self:finishGrid()
     end
 
-
-    local currentLoops = 0
-
-    -- Loop through the creation as many times as possible restricted by the dynamicLoopLimit
-    while currentLoops < self.dynamicLoopLimit do
-
-        if self.currentState == self.EInternalState.CREATE then
-
-            -- doOctree returns true when the octree has been fully made.
-            if self:doOctree() == true then
-                self:finishGrid()
-
-            end
-        elseif self.currentState == self.EInternalState.EXTERNALNEIGHBOURS then
-
-            if self:doExternNeighbours() == true then
-                self.currentState = self.EInternalState.CREATE
-            end
+    -- Loop through the creation n times per update
+    for i = 0, self.owner.maxOctreeGenerationLoopsPerUpdate do
+        if self:iterateOctree() then
+            return
         end
-
-        currentLoops = currentLoops + 1
-    end
-
-    -- Increase or lower the dynamicLoopLimit depending on the FPS.
-    local currentFPS = 1 / (dt / 1000)
-    if self.dynamicLoopLimit > 0 + self.dynamicLoopRemove and currentFPS < self.targetFPS  then
-        self.dynamicLoopLimit = self.dynamicLoopLimit - self.dynamicLoopRemove
-    elseif currentFPS > self.targetFPS then
-        self.dynamicLoopLimit = self.dynamicLoopLimit + self.dynamicLoopAdd
-    elseif self.dynamicLoopLimit < 1 then
-        self.dynamicLoopLimit = self.dynamicLoopLimit + self.dynamicLoopAdd
     end
 
 
 end
 
+--- iterateOctree is called from update function to do one iteration of creating the octree.
+function GridMap3DStateGenerate:iterateOctree()
+
+    if self.currentState == self.EInternalState.CREATE then
+        -- doOctree returns true when the octree has been fully made.
+        if self:doOctree() == true then
+            self.currentState = self.EInternalState.FINISH
+            return true
+        end
+    elseif self.currentState == self.EInternalState.EXTERNALNEIGHBOURS then
+
+        if self:doExternNeighbours() == true then
+            self.currentState = self.EInternalState.CREATE
+        end
+    end
+
+    return false
+end
+
+--- finishGrid is called when octree creation is completed.
+-- Prints out the time taken to create the octree and broadcasts a message that octree has been generated.
+-- Finally requests to change owner state to idle.
 function GridMap3DStateGenerate:finishGrid()
 
     local minutes = math.floor(self.generationTime / 60)
     local seconds = self.generationTime % 60
     Logging.info(string.format("GridMap3DStateGenerate done generating octree! Took around %d Minutes, %d Seconds",minutes,seconds))
+
+
+
+
     -- Change state to idle
-    g_messageCenter:publish(MessageType.GRIDMAP3D_GRID_GENERATED)
     self.currentState = self.EInternalState.IDLE
     if self.owner ~= nil then
+        self.owner.bGridGenerated = true
+
+        if g_messageCenter ~= nil then
+            g_messageCenter:publish(MessageType.GRIDMAP3D_GRID_GENERATED)
+        end
+
         self.owner:changeState(self.owner.EGridMap3DStates.IDLE)
     end
 end
@@ -413,12 +405,16 @@ function GridMap3DStateGenerate:doOctree()
 
 end
 
+--- doExternNeighbours is called after one whole layer has been done and does it for each 8 children of a node.
+-- Forwards call to the owner to find the neighbours.
+--@return true if all the nodes for current layer has had their neighbours found.
 function GridMap3DStateGenerate:doExternNeighbours()
 
     if self.owner == nil then
         return false
     end
 
+    -- As octree has always 8 children, means they are next to each other for 8 indices.
     for i = 1, 8 do
         self.owner:findNeighbours(self.currentLayerNodes[self.currentNodeIndex + (i - 1)],i)
     end
@@ -433,7 +429,8 @@ function GridMap3DStateGenerate:doExternNeighbours()
     return false
 end
 
-
+--- increaseLayer is called after every node has been looped through and had it's children created if solid.
+--@return true if no more nodes found in the nextLayerNodes, which means the octree has been completed.
 function GridMap3DStateGenerate:increaseLayer()
     self.currentLayerNodes = self.nextLayerNodes
     self.currentNodeIndex = 1
@@ -543,23 +540,28 @@ end
 --@param dt deltaTime forwarded from the owner update function.
 function GridMap3DStateUpdate:update(dt)
     GridMap3DStateUpdate:superClass().update(self,dt)
-
-    if not self.bFindNeighbours and self:updateGrid() == true then
-
-        if #self.nodesToCheck > 0 then
-            table.insert(self.currentLayerNodes,self.nodesToCheck[1])
-            table.remove(self.nodesToCheck,1)
-            return
-        else
-            Logging.info("Updated GridMap3D")
-            g_messageCenter:publish(MessageType.GRIDMAP3D_GRID_UPDATED)
-            self:receiveWork()
-            return
-        end
-    elseif self.bFindNeighbours then
-        self:doExternNeighbours()
+    if self.owner == nil then
+        return
     end
 
+
+    for i = 0, self.owner.maxOctreePreLoops do
+        if not self.bFindNeighbours and self:updateGrid() == true then
+
+            if #self.nodesToCheck > 0 then
+                table.insert(self.currentLayerNodes,self.nodesToCheck[1])
+                table.remove(self.nodesToCheck,1)
+                return
+            else
+                Logging.info("Updated GridMap3D")
+                g_messageCenter:publish(MessageType.GRIDMAP3D_GRID_UPDATED,self.gridUpdate.id)
+                self:receiveWork()
+                return
+            end
+        elseif self.bFindNeighbours then
+            self:doExternNeighbours()
+        end
+    end
 end
 
 
@@ -569,12 +571,13 @@ function GridMap3DStateUpdate:destroy()
     --
 end
 
-
+--- receiveWork is called when changed into this state, and it will dequeue an update from owner to be processed.
 function GridMap3DStateUpdate:receiveWork()
     if self.owner == nil then
         return
     end
 
+    -- if no update ready returns
     if next(self.owner.gridUpdateReadyQueue) == nil then
         self.owner:changeState(self.owner.EGridMap3DStates.IDLE)
         return
@@ -585,13 +588,20 @@ function GridMap3DStateUpdate:receiveWork()
     self.gridUpdate = nextTableValue[2]
     self.owner.gridUpdateReadyQueue[nextTableValue[1]] = nil
 
+    -- Get the octree nodes which include the area that has been modified.
     self:getNodeToRedo()
+
+    if #self.nodesToCheck < 1 then
+        self.owner:changeState(self.owner.EGridMap3DStates.IDLE)
+        return
+    end
 
     table.insert(self.currentLayerNodes,self.nodesToCheck[1])
     table.remove(self.nodesToCheck,1)
 
 end
 
+--- getNodeToRedo prepares gets the maxExtent of the aabb of the update, and proceeds to run a recursive function to find the nodes within.
 function GridMap3DStateUpdate:getNodeToRedo()
     if self.owner == nil or self.gridUpdate == nil or self.owner.nodeTree == nil then
         return
@@ -603,6 +613,10 @@ function GridMap3DStateUpdate:getNodeToRedo()
 
 end
 
+--- findEncomppasingNode is a recursive function which runs to add the octree nodes which are inside the aabb of the update,
+-- into the nodesToCheck table.
+--@param node current that is being checked.
+--@param maxExtent is the longest axis of the aabb.
 function GridMap3DStateUpdate:findEncomppasingNode(node,maxExtent)
 
     local aabbNode = {node.positionX - (node.size / 2), node.positionY - (node.size / 2), node.positionZ - (node.size / 2),node.positionX + (node.size / 2), node.positionY + (node.size / 2), node.positionZ + (node.size / 2) }
@@ -627,7 +641,7 @@ function GridMap3DStateUpdate:findEncomppasingNode(node,maxExtent)
 
 end
 
-
+--- updateGrid is the actual function updating the octree, works a bit similarily as the generation state.
 function GridMap3DStateUpdate:updateGrid()
 
     if self.owner == nil then
@@ -667,6 +681,9 @@ function GridMap3DStateUpdate:updateGrid()
     return false
 end
 
+--- checkForNonSolids is called if some nodes has been deleted, it will go recursively check parents if all the children are non-solid,
+-- in such cases it can then remove all the 8 children from the node.
+--@param parent is the parent which children are being checked if all are non solid then can clear the children of this parent.
 function GridMap3DStateUpdate:checkForNonSolids(parent)
 
     if parent == nil or parent.children == nil then
@@ -692,7 +709,10 @@ function GridMap3DStateUpdate:checkForNonSolids(parent)
 
 end
 
-
+--- reCheckChildren is the main check run when updating the octree.-
+-- It checks if there is any change for the non-leaf node.
+-- And then either adds new or removes if there is a change.
+--@param parent is the node which is being checked for any changes.
 function GridMap3DStateUpdate:reCheckChildren(parent)
 
     if self.owner == nil or parent == nil then
@@ -733,9 +753,9 @@ function GridMap3DStateUpdate:reCheckChildren(parent)
         end
     end
 
-
 end
 
+--- doExternNeighbours is called when one layer has been checked and will create/recheck the proper neighbours for each node.
 function GridMap3DStateUpdate:doExternNeighbours()
 
     if self.owner == nil then
@@ -755,7 +775,9 @@ function GridMap3DStateUpdate:doExternNeighbours()
 
 end
 
-
+--- removeNeighbours is a recursive function which will remove properly the neighbours from the nodes which will be deleted.
+--@param node is the current node which will have it's neighbours removed.
+--@param parent is the most outer node which has been changed and will be used as the neighbours for all the children's neighbours that depended on the children.
 function GridMap3DStateUpdate:removeNeighbours(node,parent)
 
     if node.children == nil then
@@ -771,6 +793,9 @@ function GridMap3DStateUpdate:removeNeighbours(node,parent)
 
 end
 
+--- deleteAllNeighbours clears the neighbours from this node, and set instead as the parent node which still exists.
+--@param node is the node which is being deleted.
+--@param newParentNeighbour is the outer parent which is not being deleted, so it can be set as the new neighbour, as each node needs a neighbour, if not outside the map.
 function GridMap3DStateUpdate:deleteAllNeighbours(node,newParentNeighbour)
 
     if node.xNeighbour ~= nil then
@@ -987,7 +1012,7 @@ function GridMap3DStateDebug:printCurrentNodeInfo(node)
         if node.size == targetVoxelSize then
             if node.positionX ~= self.lastNode.x or node.positionY ~= self.lastNode.y or node.positionZ ~= self.lastNode.z then
                 self.lastNode.x, self.lastNode.y , self.lastNode.z = node.positionX, node.positionY, node.positionZ
-                DebugUtil.printTableRecursively(node," ",0,1)
+                DebugUtil.printTableRecursively(node," ",0,0)
             end
             if node.xNeighbour ~= nil then
                 renderText3D(node.xNeighbour.positionX,node.xNeighbour.positionY,node.xNeighbour.positionZ,0,0,0,2,"xNeighbour")

@@ -90,9 +90,90 @@
             end,
     }
 
+local gridLeafNodeChildPerDirection = {
+        [ENavDirection.NORTH] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] == -1 then
+                return {nil, -1}
+            end
+
+            if node[1].xNeighbour ~= nil and node[1].xNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+                    return {node[1].xNeighbour,node[2] - 3}
+            elseif node[1].xNeighbour ~= nil then
+                    return {node[1].xNeighbour,-1}
+            end
+
+            return {nil,-1}
+            end,
+        [ENavDirection.EAST] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] == -1 then
+                return {nil, -1}
+            end
+
+            if node[1].zNeighbour ~= nil and node[1].zNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+                    return {node[1].zNeighbour,node[2] - 12}
+            elseif node[1].zNeighbour ~= nil then
+                    return {node[1].zNeighbour,-1}
+            end
+
+            return {nil,-1}
+            end,
+        [ENavDirection.SOUTH] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] == -1 then
+                return {nil, -1}
+            end
+
+            if node[1].xMinusNeighbour ~= nil and node[1].xMinusNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+                    return {node[1].xMinusNeighbour,node[2] + 3}
+            elseif node[1].xMinusNeighbour ~= nil then
+                    return {node[1].xMinusNeighbour,-1}
+            end
+
+            return {nil,-1}
+            end,
+        [ENavDirection.WEST] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] == -1 then
+                return {nil, -1}
+            end
+
+            if node[1].zMinusNeighbour ~= nil and node[1].zMinusNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+                    return {node[1].zMinusNeighbour,node[2] + 12}
+            elseif node[1].zMinusNeighbour ~= nil then
+                    return {node[1].zMinusNeighbour,-1}
+            end
+
+            return {nil,-1}
+            end,
+        [ENavDirection.UP] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] == -1 then
+                return {nil, -1}
+            end
+
+            if node[1].yNeighbour ~= nil and node[1].yNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+                    return {node[1].yNeighbour,node[2] + 16 - 64}
+            elseif node[1].yNeighbour ~= nil then
+                    return {node[1].yNeighbour,-1}
+            end
+
+            return {nil,-1}
+            end,
+        [ENavDirection.DOWN] = function(node,direction)
+            if node == nil or node[1] == nil or node[2] == -1 then
+                return {nil, -1}
+            end
+
+            if node[1].yMinusNeighbour ~= nil and node[1].yMinusNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+                    return {node[1].yMinusNeighbour,node[2] + 64 - 16}
+            elseif node[1].yMinusNeighbour ~= nil then
+                    return {node[1].yMinusNeighbour,-1}
+            end
+
+            return {nil,-1}
+            end,
+}
+
     local gridLeafNodeChildrenWallPerDirection = {
         [ENavDirection.NORTH] = function()
-            return {[3] = 3,[7] = 7,[11] = 11,[15] = 15,[19] = 19,[23] = 23,[27] = 27,[31] = 31,[32] = 32,[39] = 39,[43] = 43,[47] = 47,[51] = 51,[55] = 55,[59] = 59,[63] = 63}
+            return {[3] = 3,[7] = 7,[11] = 11,[15] = 15,[19] = 19,[23] = 23,[27] = 27,[31] = 31,[35] = 35,[39] = 39,[43] = 43,[47] = 47,[51] = 51,[55] = 55,[59] = 59,[63] = 63}
             end,
         [ENavDirection.EAST] = function()
             return {[12] = 12,[13] = 13,[14] = 14,[15] = 15,[28] = 28,[29] = 29,[30] = 30,[31] = 31,[44] = 44,[45] = 45,[46] = 46,[47] = 47,[60] = 60,[61] = 61,[62] = 62,[63] = 63}
@@ -110,7 +191,7 @@
             return {[0] = 0,[1] = 1,[2] = 2,[3] = 3,[4] = 4,[5] = 5,[6] = 6,[7] = 7,[8] = 8,[9] = 9,[10] = 10,[11] = 11,[12] = 12,[13] = 13,[14] = 14,[15] = 15}
             end,
     }
-
+    -- TODO open leaf voxels all the way to the edge
     local leafNodeAdvancementTable = {
         [ENavDirection.NORTH] = function(node,direction)
             if node == nil or node[1] == nil or node[2] < 0 then
@@ -119,7 +200,7 @@
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].xNeighbour,-1}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
             return {node[1],node[2] + 1}
 
@@ -131,7 +212,7 @@
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].zNeighbour,-1}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
             return {node[1],node[2] + 4}
 
@@ -143,7 +224,7 @@
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].xMinusNeighbour,-1}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
             return {node[1],node[2] - 1}
 
@@ -155,7 +236,7 @@
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].zMinusNeighbour,-1}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
             return {node[1],node[2] - 4}
 
@@ -167,7 +248,7 @@
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yNeighbour,-1}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
             return {node[1],node[2] + 16}
 
@@ -179,164 +260,197 @@
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yMinusNeighbour,-1}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
             return {node[1],node[2] - 16}
 
             end,
     }
 
-OpenQueue = {}
-OpenQueue_mt = Class(OpenQueue)
-InitObjectClass(OpenQueue, "OpenQueue")
 
---- new creates a new PriorityQueue.
-function OpenQueue.new()
-    local self = setmetatable({},OpenQueue_mt)
+---@class AStarOpenQueue
+--Min max heap for the open nodes queue.
+AStarOpenQueue = {}
+AStarOpenQueue_mt = Class(AStarOpenQueue,Object)
+InitObjectClass(AStarOpenQueue, "AStarOpenQueue")
+
+function AStarOpenQueue.new()
+    local self = setmetatable({},AStarOpenQueue_mt)
     self.openNodes = {}
     self.hash = {}
-    self.size = 0
     return self
 end
 
-function OpenQueue:getSize()
-    return self.size
+function AStarOpenQueue:getSize()
+    return #self.openNodes
 end
 
-function OpenQueue:swap(i, j)
-  local temp = self.openNodes[i]
-  self.openNodes[i] = self.openNodes[j]
-  self.openNodes[j] = temp
-  self.hash[self.openNodes[i].gridNode[1]][self.openNodes[i].gridNode[2]] = i
-  self.hash[self.openNodes[j].gridNode[1]][self.openNodes[j].gridNode[2]] = j
+function AStarOpenQueue:getParent(i)
+    return math.floor(i / 2)
 end
 
-function OpenQueue:shiftUp(i)
-  while i > 1 do
-    local parent = math.floor(i / 2)
-    if JPS3DNode.compareNodes(self.openNodes[i], self.openNodes[parent]) then
-      self:swap(i , parent)
-      i = parent
-    else
-      break
+function AStarOpenQueue:getLeftChild(i)
+    return 2*i
+end
+
+function AStarOpenQueue:getRightChild(i)
+    return 2*i + 1
+end
+
+function AStarOpenQueue:empty()
+    self.openNodes = nil
+    self.openNodes = {}
+    self.hash = nil
+    self.hash = {}
+    self.size = 0
+end
+
+function AStarOpenQueue:insert(node)
+    if node == nil or node.gridNode[1] == nil then
+        return
     end
-   end
-end
 
-
--- A function to move an element down in a heap until it satisfies the heap property
-function OpenQueue:shiftDown(i)
-   local size = #self.openNodes
-   while i *2 <= size do
-     local child = i * 2
-     if child < size and JPS3DNode.compareNodes(self.openNodes[child +1],self.openNodes[child]) then
-       child=child +1
-     end
-     if JPS3DNode.compareNodes(self.openNodes[child],self.openNodes[i]) then
-       self:swap(i ,child)
-       i=child
-     else
-       break
-     end
-   end
-end
-
-
-function OpenQueue:insert(node)
     if self:contains(node) then
         self:update(node)
-        return false
+        return
     end
 
-    table.insert(self.openNodes ,node)
-    self.size = self.size + 1
+    table.insert(self.openNodes,node)
+    local index = #self.openNodes
     if self.hash[node.gridNode[1]] == nil then
         self.hash[node.gridNode[1]] = {}
     end
-    self.hash[node.gridNode[1]][node.gridNode[2]] = #self.openNodes
-    self:shiftUp(#self.openNodes)
-    return true
+    self.hash[node.gridNode[1]][node.gridNode[2]] = index
+
+    local parentIndex = self:getParent(index)
+
+    while index > 1 and self.openNodes[parentIndex].f > self.openNodes[index].f do
+        self:swap(index,parentIndex)
+        index = parentIndex
+        parentIndex = self:getParent(index)
+    end
+
 end
 
-function OpenQueue:pop()
-    if #self.openNodes == 0 then
+function AStarOpenQueue:pop()
+    if #self.openNodes < 1 then
         return nil
-    elseif #self.openNodes == 1 then
-        local node = self.openNodes[1]
-        self.openNodes[1] = nil
+    end
+
+    if #self.openNodes == 1 then
+
+        local node = table.remove(self.openNodes)
         self.hash[node.gridNode[1]][node.gridNode[2]] = nil
-        self.size = self.size - 1
-        return node
-    else
-        local node = self.openNodes[1]
-        self:swap(1, #self.openNodes)
-        table.remove(self.openNodes)
-        self.hash[node.gridNode[1]][node.gridNode[2]] = nil
-        self:shiftDown(1)
-        self.size = self.size - 1
         return node
     end
+
+    local node = self.openNodes[1]
+    self:swap(1,#self.openNodes)
+    table.remove(self.openNodes)
+    self.hash[node.gridNode[1]][node.gridNode[2]] = nil
+    self:heapify(1)
+    return node
 end
 
-function OpenQueue:contains(node)
+function AStarOpenQueue:contains(node)
 
-    if self.hash[node.gridNode[1]] == nil or self.hash[node.gridNode[1]][node.gridNode[2]] == nil then
-        return false
-    else
-        return true
-    end
-end
-
-
-function OpenQueue:update(node)
-    if self.hash[node.gridNode[1]] ~= nil then
-        local i = self.hash[node.gridNode[1]][node.gridNode[2]]
-        if i ~= nil then
-            local oldPriority = self.openNodes[i].f
-            self.openNodes[i].f = node.f
-            if node.f  < oldPriority then
-                self:shiftUp(i)
-            else
-                self:shiftDown(i)
+    if node ~= nil and node.gridNode[1] ~= nil then
+        if self.hash[node.gridNode[1]] ~= nil then
+            if self.hash[node.gridNode[1]][node.gridNode[2]] ~= nil then
+                return true
             end
+        end
+    end
+
+    return false
+end
+
+function AStarOpenQueue:swap(i,j)
+
+    local temp = self.openNodes[j]
+    self.openNodes[j] = self.openNodes[i]
+    self.openNodes[i] = temp
+    self.hash[self.openNodes[i].gridNode[1]][self.openNodes[i].gridNode[2]] = i
+    self.hash[self.openNodes[j].gridNode[1]][self.openNodes[j].gridNode[2]] = j
+
+end
+
+function AStarOpenQueue:update(node)
+
+    if node ~= nil and node.gridNode[1] ~= nil and self.hash[node.gridNode[1]] ~= nil and self.hash[node.gridNode[1]][node.gridNode[2]] ~= nil then
+
+        local index = self.hash[node.gridNode[1]][node.gridNode[2]]
+        if self.openNodes[index].g > node.g then
+            self.openNodes[index].g = node.g
+            self.openNodes[index].f = node.g + node.h
+            self.openNodes[index].parent = node.parent
+
+            local parentIndex = self:getParent(index)
+
+            while index > 1 and self.openNodes[parentIndex].f > self.openNodes[index].f do
+                self:swap(index,parentIndex)
+                index = parentIndex
+                parentIndex = self:getParent(index)
+            end
+
         end
     end
 end
 
+function AStarOpenQueue:heapify(index)
 
-JPS3DNode = {}
+    if #self.openNodes <= 1 then
+        return
+    end
 
---- new creates a new JPS3DNode.
-function JPS3DNode.new(gridNode,g,h,parent, direction)
+    local leftIndex = self:getLeftChild(index)
+    local rightIndex = self:getRightChild(index)
+    local smallestIndex = index
+
+    if leftIndex <= #self.openNodes and self.openNodes[leftIndex].f < self.openNodes[index].f then
+        smallestIndex = leftIndex
+    end
+
+    if rightIndex <= #self.openNodes and self.openNodes[rightIndex].f < self.openNodes[smallestIndex].f then
+        smallestIndex = rightIndex
+    end
+
+    if smallestIndex ~= index then
+        self:swap(index,smallestIndex)
+        self:heapify(smallestIndex)
+    end
+
+end
+
+
+
+AStarNode = {}
+
+--- new creates a new AStarNode.
+function AStarNode.new(gridNode,g,h,parent, direction)
     local self = setmetatable({},nil)
     self.gridNode = gridNode
-    self.g = g or 0
-    self.h = h or 0
-    self.f = g + h or 0
+    self.g = g
+    self.h = h
+    self.f = g + h
     self.parent = parent
     self.direction = direction
     return self
 end
 
--- A function to compare two nodes by their f values
-function JPS3DNode.compareNodes(node, node2)
-  return node.f < node2.f
-end
-
-
----@class JPS3D.
---Custom object class for the 3d jump point pathfinding algorithm.
-JPS3D = {}
-JPS3D.className = "JPS3D"
-JPS3D_mt = Class(JPS3D,Object)
-InitObjectClass(JPS3D, "JPS3D")
+---@class AStar.
+--Custom object class for the A* pathfinding algorithm.
+AStar = {}
+AStar.className = "AStar"
+AStar_mt = Class(AStar,Object)
+InitObjectClass(AStar, "AStar")
 
 
 --- new creates a new 3d jump point pathfinding algorithm object.
 --@param customMt optional customized base table.
-function JPS3D.new(customMt)
-    local self = Object.new(true,false, customMt or JPS3D_mt)
-    self.open = OpenQueue.new()
+function AStar.new(customMt)
+    local self = Object.new(true,false, customMt or AStar_mt)
+    self.open = AStarOpenQueue.new()
     self.closed = {}
     self.goalGridNode = nil
     self.startGridNode = nil
@@ -344,11 +458,26 @@ function JPS3D.new(customMt)
     self.bestNode = nil
     self.bFindNearest = false
     self.closedNodeCount = 0
+    self.pathingTime = 0
     self.goalPath = {}
     return self
 end
 
-function JPS3D:find(x,y,z,x2,y2,z2,findNearest)
+function AStar:clean()
+    if self.open ~= nil then
+        self.open:empty()
+    end
+    self.closed = nil
+    self.closed = {}
+    self.goalPath = nil
+    self.goalPath = {}
+    self.bFindNearest = false
+    self.closedNodeCount = 0
+    self.pathingTime = 0
+
+end
+
+function AStar:find(x,y,z,x2,y2,z2,findNearest)
 
     if g_GridMap3D == nil then
         return
@@ -356,7 +485,8 @@ function JPS3D:find(x,y,z,x2,y2,z2,findNearest)
 
     self.startGridNode = self:getGridNode(x,y,z,g_GridMap3D.nodeTree)
     self.goalGridNode = self:getGridNode(x2,y2,z2,g_GridMap3D.nodeTree)
-    local newPathNode = JPS3D:prepareNewNode(nil,self.startGridNode,nil)
+    local newPathNode = self:prepareNewNode(nil,self.startGridNode,ENavDirection.NORTH)
+
     self:addToOpen(newPathNode)
     self.bestNode = newPathNode
     self.bFindNearest = findNearest
@@ -364,22 +494,22 @@ function JPS3D:find(x,y,z,x2,y2,z2,findNearest)
 end
 
 
-function JPS3D:update(dt)
-    JPS3D:superClass().update(self,dt)
+function AStar:update(dt)
+    AStar:superClass().update(self,dt)
 
     self:raiseActive()
 
-    for _,closedNode in pairs(self.closed) do
-
-        if closedNode ~= nil then
-            for _,closedTrueNode in pairs(closedNode) do
-                if closedTrueNode ~= nil then
-                    DebugUtil.drawSimpleDebugCube(closedTrueNode.gridNode[1].positionX, closedTrueNode.gridNode[1].positionY, closedTrueNode.gridNode[1].positionZ, closedTrueNode.gridNode[1].size, 1, 0, 0)
-                end
-            end
-        end
-
-    end
+--     for _,closedNode in pairs(self.closed) do
+--
+--         if closedNode ~= nil then
+--             for _,closedTrueNode in pairs(closedNode) do
+--                 if closedTrueNode ~= nil then
+--                     DebugUtil.drawSimpleDebugCube(closedTrueNode.gridNode[1].positionX, closedTrueNode.gridNode[1].positionY, closedTrueNode.gridNode[1].positionZ, closedTrueNode.gridNode[1].size, 1, 0, 0)
+--                 end
+--             end
+--         end
+--
+--     end
 
     for i,node in ipairs(self.goalPath) do
         if i ~= 1 then
@@ -406,8 +536,11 @@ function JPS3D:update(dt)
 
 
     if self.startGridNode ~= nil and  self.bDone == false then
-        for i = 0, 50 do
+        self.pathingTime = self.pathingTime + (dt / 1000)
+        for i = 0, 200 do
             if self:doSearch() == true then
+                Logging.info(string.format("Done finding path! Took around %f ",self.pathingTime))
+                Logging.info(string.format("Checked %d nodes ",self.closedNodeCount))
                 self.bDone = true
                 return
             end
@@ -417,7 +550,7 @@ function JPS3D:update(dt)
 
 end
 
-function JPS3D:doSearch()
+function AStar:doSearch()
 
     local currentNode = self.open:pop()
 
@@ -429,8 +562,6 @@ function JPS3D:doSearch()
         return true
     end
 
-    print(string.format("currentNode being looked through: x:%d y:%d z:%d and leaf node index: %d",currentNode.gridNode[1].positionX, currentNode.gridNode[1].positionY,currentNode.gridNode[1].positionZ,currentNode.gridNode[2]))
-
     if self:isSameGridNode(currentNode.gridNode,self.goalGridNode) then
         Logging.info("goal node reached for pathfinding!")
         self:finalizePath(currentNode)
@@ -439,28 +570,28 @@ function JPS3D:doSearch()
 
     self:addToClosed(currentNode)
 
-    if currentNode.h  < self.bestNode.h then
+    if currentNode.f  < self.bestNode.f then
         self.bestNode = currentNode
     end
 
     if currentNode.gridNode[1].children ~= nil then
         self:openChildren(currentNode)
-    elseif GridMap3DNode.isLeaf(currentNode.gridNode[1]) and currentNode.gridNode[2] < 0 then
+        return
+    elseif GridMap3DNode.isLeaf(currentNode.gridNode[1]) and currentNode.gridNode[2] == -1 then
         self:openLeafVoxels(currentNode)
+        return
     end
 
     for _, direction in pairs(ENavDirection) do
-
+        local nextGridNode = nil
         if currentNode.gridNode[2] == -1 then
-            local nextGridNode = nodeAdvancementTable[direction](currentNode.gridNode)
-            if nextGridNode[1] ~= nil then
-                self:addToOpen(self:prepareNewNode(currentNode,nextGridNode,direction))
-            end
+            nextGridNode = nodeAdvancementTable[direction](currentNode.gridNode)
         else
-            local nextGridNode = leafNodeAdvancementTable[direction](currentNode.gridNode,direction)
-            if nextGridNode[1] ~= nil then
-                self:addToOpen(self:prepareNewNode(currentNode,nextGridNode,direction))
-            end
+            nextGridNode = leafNodeAdvancementTable[direction](currentNode.gridNode,direction)
+        end
+        if nextGridNode[1] ~= nil then
+            local newNode = self:prepareNewNode(currentNode,nextGridNode,direction)
+            self:addToOpen(newNode)
         end
     end
 
@@ -469,43 +600,34 @@ function JPS3D:doSearch()
 end
 
 
-function JPS3D:openChildren(node)
+function AStar:openChildren(node)
     if node == nil then
         return
     end
 
-    local newChildren = nil
-    if node.direction == nil then
-        for _, gridNodeChild in pairs(node.gridNode[1].children) do
-            table.insert(newChildren,{gridNodeChild,-1})
-        end
-    else
-        newChildren = gridNodeChildrenWallPerDirection[mirroredDirectionTable[node.direction]](node.gridNode)
-    end
+
+    local newChildren = gridNodeChildrenWallPerDirection[mirroredDirectionTable[node.direction]](node.gridNode)
 
     if newChildren == nil then
         return
     end
 
     for _, newChild in pairs(newChildren) do
-        local newPathNode = JPS3D:prepareNewNode(node.parent,newChild,node.direction)
+        local newPathNode = self:prepareNewNode(node.parent,newChild,node.direction)
         self:addToOpen(newPathNode)
     end
 
 end
 
-function JPS3D:openLeafVoxels(node)
+function AStar:openLeafVoxels(node)
     if node == nil then
         return
     end
 
     local newLeafVoxelIndices = gridLeafNodeChildrenWallPerDirection[mirroredDirectionTable[node.direction]]()
-    if newLeafVoxelIndices == nil then
-        return
-    end
 
     for _, newLeafVoxelIndex in pairs(newLeafVoxelIndices) do
-        local newPathNode = JPS3D:prepareNewNode(node.parent,{node.gridNode[1],newLeafVoxelIndex},node.direction)
+        local newPathNode = self:prepareNewNode(node.parent,{node.gridNode[1],newLeafVoxelIndex},node.direction)
         self:addToOpen(newPathNode)
     end
 
@@ -513,23 +635,23 @@ end
 
 
 
-function JPS3D:prepareNewNode(parent,gridNode,direction)
+function AStar:prepareNewNode(parent,gridNode,direction)
 
 
-    local g = 0
+    local g = 1
     local h = 0
 
     if parent ~= nil then
-        g = parent.g + JPS3D.getHeuristic(parent.gridNode,gridNode)
+        g = parent.g + 1
     end
 
-    h = JPS3D.getHeuristic(gridNode,self.goalGridNode)
+    h = self:getHeuristic(gridNode,self.goalGridNode)
 
-    return JPS3DNode.new(gridNode,g,h,parent,direction)
+    return AStarNode.new(gridNode,g,h,parent,direction)
 end
 
 
-function JPS3D:finalizePath(node)
+function AStar:finalizePath(node)
 
     if node == nil then
         return self.goalPath
@@ -547,7 +669,7 @@ end
 
 
 
-function JPS3D:isClosed(gridNode)
+function AStar:isClosed(gridNode)
     if gridNode == nil or gridNode[1] == nil then
         return true
     end
@@ -561,7 +683,7 @@ function JPS3D:isClosed(gridNode)
     return true
 end
 
-function JPS3D:addToClosed(node)
+function AStar:addToClosed(node)
 
     if self.closed[node.gridNode[1]] == nil then
         self.closed[node.gridNode[1]] = {}
@@ -573,7 +695,7 @@ function JPS3D:addToClosed(node)
 end
 
 
-function JPS3D:isSameGridNode(node,node2)
+function AStar:isSameGridNode(node,node2)
     if node == nil or node2 == nil then
         return false
     end
@@ -586,7 +708,7 @@ function JPS3D:isSameGridNode(node,node2)
 end
 
 
-function JPS3D:getGridNode(x,y,z,node)
+function AStar:getGridNode(x,y,z,node)
 
     if node == nil or g_GridMap3D == nil then
         return {nil,-1}
@@ -634,7 +756,7 @@ function JPS3D:getGridNode(x,y,z,node)
     return nil
 end
 
-function JPS3D:findLeafVoxelNode(x,y,z,node)
+function AStar:findLeafVoxelNode(x,y,z,node)
     if node == nil or g_GridMap3D == nil then
         return {nil,-1}
     end
@@ -677,8 +799,8 @@ end
 --@param node1 is the first grid node of type GridMap3DNode table.
 --@param node1 is the second grid node of type GridMap3DNode table.
 --@return a distance between the two nodes.
-function JPS3D.getHeuristic(node1,node2)
-    if node1 == nil or node2 == nil then
+function AStar:getHeuristic(node1,node2)
+    if node1 == nil or node2 == nil or node1[1] == nil or node2[1] == nil then
         return 0
     end
 
@@ -694,30 +816,44 @@ function JPS3D.getHeuristic(node1,node2)
         positionX2, positionY2, positionZ2 = GridMap3DNode.getLeafVoxelLocation(node2[1],node2[2])
     end
 
-
-    return JPS3D.euclidean_distance_squared(positionX,positionY,positionZ,positionX2,positionY2,positionZ2)
+    return AStar.euclideanDistance(positionX,positionY,positionZ,positionX2,positionY2,positionZ2)  * self:getHeuristicScaling(node1)
 end
 
+function AStar:getHeuristicScaling(node)
+    if g_GridMap3D == nil or node == nil or node[1] == nil then
+        return
+    end
+
+    local layerScaling = g_GridMap3D:getNodeTreeLayer(node[1].size)
+    -- if is in a leaf voxel then +1, as giving leaf node size to getNodeTreeLayer does not count leaf voxels as a layer.
+    if node[2] > -1 then
+        layerScaling = layerScaling + 1
+    end
+
+    return layerScaling
+end
+
+
 -- Define a function to calculate chebyshev distance between two points
-function JPS3D.chebyshev_distance(x1, y1, z1, x2, y2, z2)
+function AStar.chebyshevDistance(x1, y1, z1, x2, y2, z2)
   -- Return the maximum of the absolute differences between the coordinates
   return math.max(math.abs(x1 - x2), math.abs(y1 - y2), math.abs(z1 - z2))
 end
 
 -- Define a function to calculate euclidean distance squared between two points
-function JPS3D.euclidean_distance_squared(x1, y1, z1, x2, y2, z2)
+function AStar.euclideanDistance_squared(x1, y1, z1, x2, y2, z2)
   -- Return the sum of the squares of the differences between the coordinates
   return math.pow((x1 - x2),2) + math.pow((y1 - y2),2) + math.pow((z1 - z2),2)
 end
 
 -- Define a function to calculate euclidean distance between two points
-function JPS3D.euclidean_distance(x1, y1, z1, x2, y2, z2)
+function AStar.euclideanDistance(x1, y1, z1, x2, y2, z2)
   -- Return the square root of the sum of the squares of the differences between the coordinates
   return math.sqrt(math.pow((x1 - x2),2) + math.pow((y1 - y2),2) + math.pow((z1 - z2),2))
 end
 
 
-function JPS3D:addToOpen(newNode)
+function AStar:addToOpen(newNode)
     if newNode == nil then
         return
     end
@@ -730,7 +866,7 @@ function JPS3D:addToOpen(newNode)
 end
 
 
-function JPS3D:checkgridNodePossibility(gridNode)
+function AStar:checkgridNodePossibility(gridNode)
 
     if gridNode == nil or gridNode[1] == nil or self:isClosed(gridNode) then
         return false
@@ -756,6 +892,8 @@ function JPS3D:checkgridNodePossibility(gridNode)
         end
 
     end
+
+
 
 
     return true

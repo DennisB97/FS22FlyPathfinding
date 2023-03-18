@@ -26,206 +26,8 @@ Selling or distributing this mod for a fee or any other form of consideration is
 Please refer to the game developer's website for more information.
 ]]
 
-local findNeighboursTable = {
-        [1] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].xNeighbour,-1}
-            end
-            return {node[1],node[2] + 1}
-
-            end,
-        [2] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].zNeighbour,-1}
-            end
-            return {node[1],node[2] + 4}
-
-            end,
-        [3] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].xMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 1}
-
-            end,
-        [4] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].zMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 4}
-
-            end,
-        [5] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yNeighbour,-1}
-            end
-            return {node[1],node[2] + 16}
-
-            end,
-        [6] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 16}
-
-            end,
-        [7] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 16}
-
-            end,
-        [8] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 16}
-
-            end,
-    }
-
-local findExternalNeighboursTable = {
-        [1] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].xNeighbour,-1}
-            end
-            return {node[1],node[2] + 1}
-
-            end,
-        [2] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].zNeighbour,-1}
-            end
-            return {node[1],node[2] + 4}
-
-            end,
-        [3] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].xMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 1}
-
-            end,
-        [4] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].zMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 4}
-
-            end,
-        [5] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yNeighbour,-1}
-            end
-            return {node[1],node[2] + 16}
-
-            end,
-        [6] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 16}
-
-            end,
-        [7] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 16}
-
-            end,
-        [8] = function(node,direction)
-            if node == nil or node[1] == nil or node[2] < 0 then
-                return {nil,-1}
-            end
-
-            local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
-            if wallLeafNodes[node[2]] ~= nil then
-                return {node[1].yMinusNeighbour,-1}
-            end
-            return {node[1],node[2] - 16}
-
-            end,
-    }
-
-
-
+--- EDirections used when finding neighbours within the octree.
+local EDirections = {X = 0, MINUSX = 1, Y = 2, MINUSY = 3, Z = 4, MINUSZ = 5}
 
 
 ---@class GridMap3DLatentMessage enable a function to be run in sec update tick delay.
@@ -311,13 +113,16 @@ function GridMap3DNode.isSolid(node)
     return true
 end
 
+--- isLeafVoxelSolidAt is called to check a single voxel within a leaf node if it is solid or not.
+--@param node is the GridMap3DNode leaf node to be checked.
+--@param index is the leaf voxel index to be checked within the leaf node.
 function GridMap3DNode.isLeafVoxelSolidAt(node,index)
     if node == nil or index == nil then
         return false
     end
 
     if index > 31 then
-
+        -- as the top and bottom is split into two variables need to - 32 the top to get into 0-32 range too. But the index goes between 0-63.
         local bitState = bitAND(math.floor(node.leafVoxelsTop / (math.pow(2,index - 32))), 1)
         if bitState ~= 0 then
             return true
@@ -336,6 +141,11 @@ function GridMap3DNode.isLeafVoxelSolidAt(node,index)
     return false
 end
 
+--- isUnderTerrain called to find out if the node is completely under the terrain.
+-- For any node that is not a leaf node, has spare variables of the leaf node's voxels to use, so uses the leafVoxelsBottom and sets it to -1.
+-- And the other is nil, which will mean the terrain is marked as under.
+--@param node is the GridMap3DNode non-leaf node to be checked for if it is under terrain.
+--@return bool value indicating if node is completely under terrain or not.
 function GridMap3DNode.isUnderTerrain(node)
     if node == nil then
         return true
@@ -500,13 +310,9 @@ function GridMap3D.new(customMt)
     -- nodeTree will contain the root node of the octree which then has references to deeper nodes.
     self.nodeTree = {}
     self.terrainSize = 2048
-    self.maxVoxelResolution = 2 -- in meters
-    -- leaf node is four times the size of the highest resolution, as leaf node contains the highest resolution in a 4x4x4 grid.
-    self.leafNodeResolution = self.maxVoxelResolution * 4
     -- contains all the states
     self.gridMap3DStates = {}
     self.EGridMap3DStates = {UNDEFINED = 0, PREPARE = 1, GENERATE = 2, DEBUG = 3, UPDATE = 4, IDLE = 5}
-    self.EDirections = {X = 0, MINUSX = 1, Y = 2, MINUSY = 3, Z = 4, MINUSZ = 5}
     self.currentGridState = self.EGridMap3DStates.UNDEFINED
     -- this bool is toggled by console command to true and false
     self.bOctreeDebug = false
@@ -525,8 +331,10 @@ function GridMap3D.new(customMt)
     -- used by the grid states to know if collision check was solid, set in the trace callback
     self.bTraceVoxelSolid = false
     self.bUnderTerrain = false
-
-    self.collisionMask = CollisionFlag.STATIC_WORLD + CollisionFlag.WATER
+    self.bCenterUnderTerrain = false
+    self.bBottomUnderTerrain = false
+    self.collisionMask = CollisionFlag.STATIC_WORLD
+    self.bGridGenerated = false
 
     -- Need to find the highest value in the messagetype , as own inserted ones need to be higher
     local messageTypeCount = 0
@@ -537,6 +345,7 @@ function GridMap3D.new(customMt)
             end
         end
     end
+
     MessageType.GRIDMAP3D_GRID_GENERATED = messageTypeCount + 1
     MessageType.GRIDMAP3D_GRID_UPDATED = messageTypeCount + 2
     MessageType.GRIDMAP3D_GRID_UPDATEREADY = messageTypeCount + 3
@@ -557,6 +366,8 @@ function GridMap3D.new(customMt)
 
     -- subscribe to the own UPDATEREADY message, so that the grid can be tried to be updated.
     g_messageCenter:subscribe(MessageType.GRIDMAP3D_GRID_UPDATEREADY,GridMap3D.onGridNeedUpdate,self)
+
+    self:loadConfig()
 
     -- Creates all the needed states and changes to the prepare state initially.
     table.insert(self.gridMap3DStates,GridMap3DStatePrepare.new())
@@ -591,6 +402,39 @@ function GridMap3D:init()
     end
 
     return true
+end
+
+
+function GridMap3D:loadConfig()
+    local filePath = Utils.getFilename("config/octreeConfig.xml", FlyPathfinding.modDir)
+    local xmlFile = loadXMLFile("TempXML", filePath)
+
+    -- Highest resolution leaf voxels in the octree, given in meters
+    self.maxVoxelResolution = 1
+    -- How many loops to do initially when loading into the game, helps to avoid creating the octree very long while the game is properly running.
+    self.maxOctreePreLoops = 125000
+    -- How many loops per update to generate the octree, HEAVILY affects performance.
+    self.maxOctreeGenerationLoopsPerUpdate = 20
+
+    if xmlFile ~= nil then
+        if getXMLString(xmlFile, "Config#maxVoxelResolution") ~= nil then
+            self.maxVoxelResolution = getXMLFloat(xmlFile,"Config#maxVoxelResolution")
+        end
+        if getXMLString(xmlFile, "Config#maxOctreePreLoops") ~= nil then
+            self.maxOctreePreLoops = getXMLInt(xmlFile,"Config#maxOctreePreLoops")
+        end
+        if getXMLString(xmlFile, "Config#maxOctreeGenerationLoopsPerUpdate") ~= nil then
+            self.maxOctreeGenerationLoopsPerUpdate = getXMLInt(xmlFile,"Config#maxOctreeGenerationLoopsPerUpdate")
+        end
+    end
+
+    -- leaf node is four times the size of the highest resolution, as leaf node contains the highest resolution in a 4x4x4 grid.
+    self.leafNodeResolution = self.maxVoxelResolution * 4
+
+end
+
+function GridMap3D:isAvailable()
+    return self.bGridGenerated
 end
 
 --- addObjectToIgnore is for adding another object to be ignored from the grid as non-solid even if it has collision.
@@ -656,7 +500,6 @@ function GridMap3D:delete()
     self.gridUpdateReadyQueue = nil
     self.onGridUpdateQueueIncreasedEvent = nil
     self.EGridMap3DStates = nil
-    self.EDirections = nil
     self.latentUpdates = nil
 
     GridMap3D:superClass().delete(self)
@@ -795,7 +638,7 @@ function GridMap3D:onPlaceableModified(placeable,isDeletion)
     end
 
     local x,y,z = getTranslation(placeable.rootNode)
-
+    local _rotX,rotY,_rotZ = getRotation(placeable.rootNode)
     -- Init a new grid queue update with the placeable's id and location, and intially has some values set which might change down below if spec_placement exists.
     local newWork = GridMap3DUpdate.new(placeable.rootNode,x,y,z,{x - 50, y - 50, z - 50, x + 50, y + 50, z + 50},isDeletion)
 
@@ -809,22 +652,30 @@ function GridMap3D:onPlaceableModified(placeable,isDeletion)
             local startX,startY,startZ = getWorldTranslation(area.startNode)
             local endX,endY,endZ = getWorldTranslation(area.endNode)
 
+            local dirX, dirZ = MathUtil.getDirectionFromYRotation(rotY)
+            local normX, _, normZ = MathUtil.crossProduct(0, 1, 0, dirX, 0, dirZ)
+            local centerXOffset = area.center.x
+            local centerZOffset = area.center.z
+            local centerX = x + dirX * centerZOffset + normX * centerXOffset
+            local centerZ = z + dirZ * centerZOffset + normZ * centerXOffset
+
             local xDistance = math.abs(startX - endX)
             local zDistance = math.abs(startZ - endZ)
             local halfDistance = math.max(xDistance,zDistance) / 2
             local halfYDistance = math.abs(startY - endY) / 2
-            minX = math.min(minX, x - halfDistance)
-            minZ = math.min(minZ, z - halfDistance)
+            minX = math.min(minX, centerX - halfDistance)
+            minZ = math.min(minZ, centerZ - halfDistance)
             minY = math.min(minY, y - halfYDistance)
 
-            maxX = math.max(maxX, x + halfDistance)
-            maxZ = math.max(maxZ, z + halfDistance)
+            maxX = math.max(maxX, centerX + halfDistance)
+            maxZ = math.max(maxZ, centerZ + halfDistance)
             maxY = math.max(maxY, y + math.abs(startY - endY))
+
         end
 
-        newWork.positionX = x
         newWork.positionY = y + (math.abs(minY - maxY) / 2)
-        newWork.positionZ = z
+        newWork.positionX = (math.abs(minX - maxX) / 2)
+        newWork.positionZ = (math.abs(minZ - maxZ) / 2)
 
         newWork.aabb = {minX,minY,minZ,maxX,maxY,maxZ}
     end
@@ -841,7 +692,7 @@ function GridMap3D:getNodeTreeLayer(size)
         return 1
     end
 
-    local dividedBy = self.terrainSize / size
+    local dividedBy = math.floor(self.terrainSize / size)
     -- + 1 as the layer 1 is the root
     return ((math.log(dividedBy)) / (math.log(2))) + 1
 end
@@ -857,6 +708,8 @@ end
 function GridMap3D:voxelOverlapCheck(x,y,z, extentRadius)
     self.bTraceVoxelSolid = false
     self.bUnderTerrain = false
+    self.bCenterUnderTerrain = false
+    self.bBottomUnderTerrain = false
 
     local terrainHeight = 0
     if g_currentMission.terrainRootNode ~= nil then
@@ -866,6 +719,14 @@ function GridMap3D:voxelOverlapCheck(x,y,z, extentRadius)
     if y + extentRadius < terrainHeight then
         self.bUnderTerrain = true
         return
+    end
+
+    if y <= terrainHeight then
+        self.bCenterUnderTerrain = true
+    end
+
+    if y - extentRadius < terrainHeight then
+        self.bBottomUnderTerrain = true
     end
 
 
@@ -883,8 +744,8 @@ function GridMap3D:voxelOverlapCheckCallback(hitObjectId)
         return true
     end
 
-
-    if getHasClassId(hitObjectId,ClassIds.SHAPE) and bitAND(getCollisionMask(hitObjectId),CollisionFlag.TREE) ~= CollisionFlag.TREE  then
+    if getHasClassId(hitObjectId,ClassIds.SHAPE) and bitAND(getCollisionMask(hitObjectId),CollisionFlag.TREE) ~= CollisionFlag.TREE
+        and bitAND(getCollisionMask(hitObjectId),CollisionFlag.WATER) ~= CollisionFlag.WATER then
         self.bTraceVoxelSolid = true
         return false
     end
@@ -909,9 +770,9 @@ function GridMap3D:createLeafVoxels(parent)
     parent.leafVoxelsBottom = 0
     parent.leafVoxelsTop = 0
 
-    -- early check if no collision for whole leaf node then no inner 64 voxels need to be checked
+    -- early check if no collision for whole leaf node and not below terrain then no inner 64 voxels need to be checked
     self:voxelOverlapCheck(parent.positionX,parent.positionY,parent.positionZ,parent.size / 2)
-    if self.bTraceVoxelSolid == false then
+    if self.bTraceVoxelSolid == false and self.bUnderTerrain == false and self.bBottomUnderTerrain == false then
         return
     end
 
@@ -920,18 +781,17 @@ function GridMap3D:createLeafVoxels(parent)
         local posX,posY,posZ = GridMap3DNode.getLeafVoxelLocation(parent,i)
         self:voxelOverlapCheck(posX,posY,posZ,self.maxVoxelResolution / 2)
         -- if voxel was solid then set the bit to 1
-        if self.bTraceVoxelSolid == true then
+        if self.bTraceVoxelSolid == true or self.bBottomUnderTerrain == true or self.bUnderTerrain == true then
             parent.leafVoxelsBottom = bitOR(parent.leafVoxelsBottom,( 1 * 2^i))
         end
     end
-
 
     for i = 32, 63 do
         local posX,posY,posZ = GridMap3DNode.getLeafVoxelLocation(parent,i)
         self:voxelOverlapCheck(posX,posY,posZ,self.maxVoxelResolution / 2)
         -- if voxel was solid then set the bit to 1
-        if self.bTraceVoxelSolid == true then
-            parent.leafVoxelsBottom = bitOR(parent.leafVoxelsBottom,( 1 * 2^i))
+        if self.bTraceVoxelSolid == true or self.bBottomUnderTerrain == true or self.bUnderTerrain == true then
+            parent.leafVoxelsTop = bitOR(parent.leafVoxelsTop,( 1 * 2^(i-32)))
         end
     end
 
@@ -947,25 +807,25 @@ function GridMap3D:findNeighbours(node,childNumber)
     end
 
     if childNumber == 1 then
-        self:findOutsideNeighbours(2,self.EDirections.MINUSX,node)
-        self:findOutsideNeighbours(3,self.EDirections.MINUSZ,node)
-        self:findOutsideNeighbours(5,self.EDirections.MINUSY,node)
+        self:findOutsideNeighbours(2,EDirections.MINUSX,node)
+        self:findOutsideNeighbours(3,EDirections.MINUSZ,node)
+        self:findOutsideNeighbours(5,EDirections.MINUSY,node)
 
     elseif childNumber == 2 then
         node.xMinusNeighbour = node.parent.children[1]
         node.parent.children[1].xNeighbour = node
 
-        self:findOutsideNeighbours(4,self.EDirections.MINUSZ,node)
-        self:findOutsideNeighbours(1,self.EDirections.X,node)
-        self:findOutsideNeighbours(6,self.EDirections.MINUSY,node)
+        self:findOutsideNeighbours(4,EDirections.MINUSZ,node)
+        self:findOutsideNeighbours(1,EDirections.X,node)
+        self:findOutsideNeighbours(6,EDirections.MINUSY,node)
 
     elseif childNumber == 3 then
         node.zMinusNeighbour = node.parent.children[1]
         node.parent.children[1].zNeighbour = node
 
-        self:findOutsideNeighbours(4,self.EDirections.MINUSX,node)
-        self:findOutsideNeighbours(1,self.EDirections.Z,node)
-        self:findOutsideNeighbours(7,self.EDirections.MINUSY,node)
+        self:findOutsideNeighbours(4,EDirections.MINUSX,node)
+        self:findOutsideNeighbours(1,EDirections.Z,node)
+        self:findOutsideNeighbours(7,EDirections.MINUSY,node)
 
     elseif childNumber == 4 then
         node.zMinusNeighbour = node.parent.children[2]
@@ -974,9 +834,9 @@ function GridMap3D:findNeighbours(node,childNumber)
         node.xMinusNeighbour = node.parent.children[3]
         node.parent.children[3].xNeighbour = node
 
-        self:findOutsideNeighbours(8,self.EDirections.MINUSY,node)
-        self:findOutsideNeighbours(2,self.EDirections.Z,node)
-        self:findOutsideNeighbours(3,self.EDirections.X,node)
+        self:findOutsideNeighbours(8,EDirections.MINUSY,node)
+        self:findOutsideNeighbours(2,EDirections.Z,node)
+        self:findOutsideNeighbours(3,EDirections.X,node)
 
 
 
@@ -984,9 +844,9 @@ function GridMap3D:findNeighbours(node,childNumber)
         node.yMinusNeighbour = node.parent.children[1]
         node.parent.children[1].yNeighbour = node
 
-        self:findOutsideNeighbours(6,self.EDirections.MINUSX,node)
-        self:findOutsideNeighbours(7,self.EDirections.MINUSZ,node)
-        self:findOutsideNeighbours(1,self.EDirections.Y,node)
+        self:findOutsideNeighbours(6,EDirections.MINUSX,node)
+        self:findOutsideNeighbours(7,EDirections.MINUSZ,node)
+        self:findOutsideNeighbours(1,EDirections.Y,node)
 
     elseif childNumber == 6 then
         node.yMinusNeighbour = node.parent.children[2]
@@ -995,9 +855,9 @@ function GridMap3D:findNeighbours(node,childNumber)
         node.xMinusNeighbour = node.parent.children[5]
         node.parent.children[5].xNeighbour = node
 
-        self:findOutsideNeighbours(8,self.EDirections.MINUSZ,node)
-        self:findOutsideNeighbours(5,self.EDirections.X,node)
-        self:findOutsideNeighbours(2,self.EDirections.Y,node)
+        self:findOutsideNeighbours(8,EDirections.MINUSZ,node)
+        self:findOutsideNeighbours(5,EDirections.X,node)
+        self:findOutsideNeighbours(2,EDirections.Y,node)
 
 
 
@@ -1009,9 +869,9 @@ function GridMap3D:findNeighbours(node,childNumber)
         node.parent.children[5].zNeighbour = node
 
 
-        self:findOutsideNeighbours(8,self.EDirections.MINUSX,node)
-        self:findOutsideNeighbours(3,self.EDirections.Y,node)
-        self:findOutsideNeighbours(5,self.EDirections.Z,node)
+        self:findOutsideNeighbours(8,EDirections.MINUSX,node)
+        self:findOutsideNeighbours(3,EDirections.Y,node)
+        self:findOutsideNeighbours(5,EDirections.Z,node)
 
     elseif childNumber == 8 then
         node.yMinusNeighbour = node.parent.children[4]
@@ -1023,9 +883,9 @@ function GridMap3D:findNeighbours(node,childNumber)
         node.zMinusNeighbour = node.parent.children[6]
         node.parent.children[6].zNeighbour = node
 
-        self:findOutsideNeighbours(4,self.EDirections.Y,node)
-        self:findOutsideNeighbours(6,self.EDirections.Z,node)
-        self:findOutsideNeighbours(7,self.EDirections.X,node)
+        self:findOutsideNeighbours(4,EDirections.Y,node)
+        self:findOutsideNeighbours(6,EDirections.Z,node)
+        self:findOutsideNeighbours(7,EDirections.X,node)
 
     end
 
@@ -1048,7 +908,7 @@ function GridMap3D:findOutsideNeighbours(neighbourChildNumber,direction,node)
 
     local parentNode = node.parent
 
-    if direction ==  self.EDirections.MINUSX then
+    if direction ==  EDirections.MINUSX then
 
         if parentNode.xMinusNeighbour ~= nil then
 
@@ -1064,7 +924,7 @@ function GridMap3D:findOutsideNeighbours(neighbourChildNumber,direction,node)
             return
         end
 
-    elseif direction == self.EDirections.MINUSY then
+    elseif direction == EDirections.MINUSY then
 
         if parentNode.yMinusNeighbour ~= nil then
 
@@ -1081,7 +941,7 @@ function GridMap3D:findOutsideNeighbours(neighbourChildNumber,direction,node)
         end
 
 
-    elseif direction == self.EDirections.MINUSZ then
+    elseif direction == EDirections.MINUSZ then
 
         if parentNode.zMinusNeighbour ~= nil then
 
@@ -1097,7 +957,7 @@ function GridMap3D:findOutsideNeighbours(neighbourChildNumber,direction,node)
             return
         end
 
-    elseif direction == self.EDirections.X then
+    elseif direction == EDirections.X then
 
         if parentNode.xNeighbour ~= nil then
 
@@ -1114,7 +974,7 @@ function GridMap3D:findOutsideNeighbours(neighbourChildNumber,direction,node)
         end
 
 
-    elseif direction == self.EDirections.Y then
+    elseif direction == EDirections.Y then
 
         if parentNode.yNeighbour ~= nil then
 
@@ -1130,7 +990,7 @@ function GridMap3D:findOutsideNeighbours(neighbourChildNumber,direction,node)
             return
         end
 
-    elseif direction == self.EDirections.Z then
+    elseif direction == EDirections.Z then
 
         if parentNode.zNeighbour ~= nil then
 

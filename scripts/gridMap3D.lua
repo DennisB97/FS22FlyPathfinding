@@ -151,7 +151,7 @@ function GridMap3DNode.isUnderTerrain(node)
         return true
     end
 
-    if node.leafVoxelsBottom == nil and node.leafVoxelsBottom == -1 then
+    if node.leafVoxelsBottom == nil and node.leafVoxelsTop == -1 then
         return true
     end
 
@@ -304,9 +304,7 @@ function GridMap3D.new(customMt)
         return
     end
 
-    local self = Object.new(true,false, customMt or GridMap3D_mt)
-    -- adds a debugging console command to visualize the octree.
-    addConsoleCommand( 'GridMap3DOctreeDebug', 'toggle debugging for octree', 'octreeDebugToggle', self)
+    local self = Object.new(g_server ~= nil or g_dedicatedServerInfo ~= nil,g_client ~= nil, customMt or GridMap3D_mt)
     -- nodeTree will contain the root node of the octree which then has references to deeper nodes.
     self.nodeTree = {}
     self.terrainSize = 2048
@@ -389,7 +387,6 @@ end
 function GridMap3D:init()
 
     if g_currentMission ~= nil then
-
         -- overlapBox seems to have some bug with non default sized maps.
         if getTerrainSize(g_currentMission.terrainRootNode) ~= 2048 then
             Logging.info("The FlyPathfinding mod does not work on non-default sized maps!")
@@ -398,15 +395,15 @@ function GridMap3D:init()
         end
 
         self:changeState(self.EGridMap3DStates.PREPARE)
-
+        return true
     end
 
-    return true
+    return false
 end
 
 
 function GridMap3D:loadConfig()
-    local filePath = Utils.getFilename("config/octreeConfig.xml", FlyPathfinding.modDir)
+    local filePath = Utils.getFilename("config/config.xml", FlyPathfinding.modDir)
     local xmlFile = loadXMLFile("TempXML", filePath)
 
     -- Highest resolution leaf voxels in the octree, given in meters
@@ -417,14 +414,14 @@ function GridMap3D:loadConfig()
     self.maxOctreeGenerationLoopsPerUpdate = 20
 
     if xmlFile ~= nil then
-        if getXMLString(xmlFile, "Config#maxVoxelResolution") ~= nil then
-            self.maxVoxelResolution = getXMLFloat(xmlFile,"Config#maxVoxelResolution")
+        if getXMLString(xmlFile, "Config.octreeConfig#maxVoxelResolution") ~= nil then
+            self.maxVoxelResolution = getXMLFloat(xmlFile,"Config.octreeConfig#maxVoxelResolution")
         end
-        if getXMLString(xmlFile, "Config#maxOctreePreLoops") ~= nil then
-            self.maxOctreePreLoops = getXMLInt(xmlFile,"Config#maxOctreePreLoops")
+        if getXMLString(xmlFile, "Config.octreeConfig#maxOctreePreLoops") ~= nil then
+            self.maxOctreePreLoops = getXMLInt(xmlFile,"Config.octreeConfig#maxOctreePreLoops")
         end
-        if getXMLString(xmlFile, "Config#maxOctreeGenerationLoopsPerUpdate") ~= nil then
-            self.maxOctreeGenerationLoopsPerUpdate = getXMLInt(xmlFile,"Config#maxOctreeGenerationLoopsPerUpdate")
+        if getXMLString(xmlFile, "Config.octreeConfig#maxOctreeGenerationLoopsPerUpdate") ~= nil then
+            self.maxOctreeGenerationLoopsPerUpdate = getXMLInt(xmlFile,"Config.octreeConfig#maxOctreeGenerationLoopsPerUpdate")
         end
     end
 
@@ -433,6 +430,8 @@ function GridMap3D:loadConfig()
 
 end
 
+--- isAvailable can be called to check if there is an octree to be used.
+--@return true if an octree has been already generated.
 function GridMap3D:isAvailable()
     return self.bGridGenerated
 end
@@ -697,6 +696,76 @@ function GridMap3D:getNodeTreeLayer(size)
     return ((math.log(dividedBy)) / (math.log(2))) + 1
 end
 
+--- getGridNode is a function to find the node of the octree which given point resides in.
+--@return The GridMap3DNode of where the given point resides in, as it can be inside leaf node's voxels the return is given as {node,voxelIndex}.
+function GridMap3D:getGridNode(x,y,z,returnNodeIfSolid)
+    if x == nil or y == nil or z == nil or self.nodeTree == nil or self:isAvailable() == false then
+        return
+    end
+
+    local currentNode = self.nodeTree
+
+    local aabbParentNode = {currentNode.positionX - (currentNode.size / 2), currentNode.positionY - (currentNode.size / 2), currentNode.positionZ - (currentNode.size / 2),currentNode.positionX + (currentNode.size / 2),
+        currentNode.positionY + (currentNode.size / 2), currentNode.positionZ + (currentNode.size / 2) }
+
+    if GridMap3DNode.checkPointInAABB(x,y,z,aabbParentNode) == false then
+        return {nil,-1}
+    end
+
+    if currentNode.children == nil then
+        return {currentNode,-1}
+    end
+
+
+    while true do
+
+        -- need to check the voxels in 2 x 32 bits
+        if currentNode.size == self.leafNodeResolution then
+            if GridMap3DNode.isLeafFullSolid(currentNode) then
+                if returnNodeIfSolid == true then
+                    return {currentNode , -1}
+                else
+                    return {nil,-1}
+                end
+            end
+
+            for i = 0, 63 do
+
+                local xLoc,yLoc,zLoc = GridMap3DNode.getLeafVoxelLocation(currentNode,i)
+                local aabbLeafVoxelNode = {xLoc - (self.maxVoxelResolution / 2), yLoc - (self.maxVoxelResolution / 2), zLoc - (self.maxVoxelResolution / 2),
+                    xLoc + (self.maxVoxelResolution / 2), yLoc + (self.maxVoxelResolution / 2), zLoc + (self.maxVoxelResolution / 2) }
+
+                if GridMap3DNode.checkPointInAABB(x,y,z,aabbLeafVoxelNode) == true then
+                    if GridMap3DNode.isLeafVoxelSolidAt(currentNode,i) and returnNodeIfSolid ~= true then
+                        return {nil,-1}
+                    end
+
+                    return {currentNode , i}
+                end
+            end
+
+        elseif currentNode.children == nil then
+            return {currentNode,-1}
+        end
+
+        for _ ,childNode in pairs(currentNode.children) do
+
+            aabbChildNode = {childNode.positionX - (childNode.size / 2), childNode.positionY - (childNode.size / 2), childNode.positionZ - (childNode.size / 2),childNode.positionX + (childNode.size / 2),
+            childNode.positionY + (childNode.size / 2), childNode.positionZ + (childNode.size / 2) }
+
+            if GridMap3DNode.checkPointInAABB(x,y,z,aabbChildNode) == true then
+                currentNode = childNode
+                break
+            end
+
+        end
+
+    end
+
+    return {nil,-1}
+end
+
+
 
 --- voxelOverlapCheck is called when a new node/leaf voxel need to be checked for collision.
 -- first it checks the terrain height, if the terrain is higher than the node's y extent then can skip wasting time to collision check as it can be counted as non-solid.
@@ -889,9 +958,6 @@ function GridMap3D:findNeighbours(node,childNumber)
 
     end
 
-
-
-
 end
 
 --- findOutsideNeighbours tries to link the same resolution nodes from the parent's neighbours children.
@@ -1005,12 +1071,7 @@ function GridMap3D:findOutsideNeighbours(neighbourChildNumber,direction,node)
             neighbourNode.children[neighbourChildNumber].zMinusNeighbour = node
             return
         end
-
-
     end
-
-
-
 end
 
 
@@ -1018,7 +1079,8 @@ end
 -- Toggles the bOctreeDebug, which then when state goes to idle replcaes idle state with debug state.
 function GridMap3D:octreeDebugToggle()
 
-    if self == nil then
+    if AStar.debugObject ~= nil then
+        Logging.info("Can't turn on octree debug at same time as AStarFlyPathfinding debug mode!")
         return
     end
 

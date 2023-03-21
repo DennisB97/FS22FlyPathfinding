@@ -13,6 +13,9 @@ function FlyPathfinding:loadMap(savegame)
     -- for now create on server only the navigation grid
     if g_server ~= nil or g_dedicatedServerInfo ~= nil and g_GridMap3D == nil then
         g_GridMap3D = GridMap3D.new()
+        -- adds a debugging console command to be able to visualize the octree and A* pathfinding.
+        addConsoleCommand( 'GridMap3DOctreeDebug', 'toggle debugging for octree', 'octreeDebugToggle', g_GridMap3D)
+        addConsoleCommand( 'AStarFlypathfindingDebug', 'toggle debugging for pathfinding', 'aStarDebugToggle', AStar)
         g_GridMap3D:register(true)
     end
 

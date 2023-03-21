@@ -720,6 +720,11 @@ function GridMap3DStateUpdate:reCheckChildren(parent)
     end
 
     self.owner:voxelOverlapCheck(parent.positionX,parent.positionY,parent.positionZ,parent.size / 2)
+    if self.owner.bUnderTerrain == true then
+        parent.leafVoxelsTop = -1
+        return
+    end
+
 
     if self.owner.bTraceVoxelSolid and parent.children == nil then
         -- divided by 4 to get the new child voxels radius to offset inside the parent node
@@ -890,8 +895,6 @@ function GridMap3DStateDebug:enter()
         local _, _eventId = g_inputBinding:registerActionEvent(InputAction.GRIDMAP3D_DBG_OCTREE_LAYER_UP, self, self.increaseDebugLayer, true, false, false, true, true, true)
     end
 
-
-
 end
 
 --- leave removes the console command action bindings.
@@ -1033,9 +1036,7 @@ function GridMap3DStateDebug:printCurrentNodeInfo(node)
                 renderText3D(node.zMinusNeighbour.positionX,node.zMinusNeighbour.positionY,node.zMinusNeighbour.positionZ,0,0,0,2,"zMinusNeighbour")
             end
 
-
             return
-
 
         elseif node.children ~= nil then
             for _ , node in pairs(node.children) do
@@ -1043,7 +1044,6 @@ function GridMap3DStateDebug:printCurrentNodeInfo(node)
             end
         end
     end
-
 
 end
 

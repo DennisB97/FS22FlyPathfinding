@@ -3,5 +3,8 @@
      <texts>
         <text name="input_GRIDMAP3D_DBG_OCTREE_LAYER_DOWN" text="Lower octree debug layer" />
         <text name="input_GRIDMAP3D_DBG_OCTREE_LAYER_UP" text="Increase octree debug layer" />
+        <text name="input_FLYPATHFINDING_DBG_ASTAR_PATH_PREVIOUS" text="Debug the previous path" />
+        <text name="input_FLYPATHFINDING_DBG_ASTAR_PATH_NEXT" text="Debug the next path" />
+        <text name="input_FLYPATHFINDING_DBG_ASTAR_SHOW_CLOSEDNODES" text="Toggle between showing path's closed nodes" />
 	</texts>
 </l10n>

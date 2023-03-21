@@ -1,5 +1,7 @@
 # FS22_FlyPathfinding
 
+![Debug visualizing a path that has been generated](https://i.gyazo.com/276cf7af27bb4457710b0a92254b1d4a.jpg)
+
 ## Description
 
 This is a mod for Farming Simulator 22, which provides access to a 3D octree of the game map. 

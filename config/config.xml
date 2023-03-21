@@ -2,16 +2,19 @@
 
 
 <!--
-	Some general settings for the octree creation, these affects the performance of the game while the octree is under construction.
+	Some general settings for the octree and A* search, these affects the performance of the game.
 -->
 
-<!-- maxVoxelResolution highest resolution leaf voxels in the octree, given in meters -->
-<!-- maxOctreePreLoops how many loops to do initially when loading into the game,
-    helps to avoid creating the octree very long while the game is running. (Causes game to take a few seconds before the game world becomes available)
--->
-<!-- maxOctreeGenerationLoopsPerUpdate how many loops per update to generate the octree, HEAVILY affects performance. But the smaller the value the longer it takes to generate the octree navigation grid. -->
 <Config>
+<!-- maxVoxelResolution highest resolution leaf voxels in the octree, given in meters. -->
+<!-- maxOctreePreLoops how many loops to do initially when loading into the game
+    helps to avoid creating the octree very long while the game is running. (Bigger the number the more seconds before the game world becomes available after pressing enter on loading screen done)
+-->
+<!-- maxOctreeGenerationLoopsPerUpdate how many loops per update to generate the octree, HEAVILY affects performance until the octree is done. But the smaller the value the longer it takes to generate the octree navigation grid. -->
 <octreeConfig maxVoxelResolution="1" maxOctreePreLoops="125000" maxOctreeGenerationLoopsPerUpdate="20" />
+
+<!-- maxSearchedNodes limits the amount of nodes can be searched until giving up looking for path, too low value could cause problems in cases such as very long tunnels etc. -->
+<!-- maxPathfindLoops how many loops per update to do the A* pathfinding algorithm, HEAVILY affects performance as long as there is an object that is pathfinding. -->
 <aStarConfig maxSearchedNodes="100000" maxPathfindLoops="100" />
 
 </Config>

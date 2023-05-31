@@ -607,7 +607,7 @@ end
 --@param roundSharpAngleLimit is an optional float for adjusting the angle limit for when between segments are deemed too sharp.
 --@param roundConnectionRadius is an optional float, a radius of to move the end and start point of the segments each to their own direction, which angle was too sharp.
 --@return returns true if started creating the spline.
-function CatmullRomSplineCreator:createSpline(points,callback,customStartControlPoint,customEndControlPoint,lastDirection,roundSharpAngles,roundSharpAngleLimit,roundConnectionRadius,segment)
+function CatmullRomSplineCreator:createSpline(points,callback,customStartControlPoint,customEndControlPoint,lastDirection,roundSharpAngles,roundSharpAngleLimit,roundConnectionRadius)
     if self.currentState == nil or self.currentState ~= self.ESplineStates.IDLE then
         Logging.warning("Can't start a new spline creation while CatmullRomSplineCreator is still generating/updating!")
         return false

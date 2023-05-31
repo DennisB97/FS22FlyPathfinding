@@ -1,16 +1,19 @@
 ﻿<?xml version="1.0" encoding="utf-8" standalone="no" ?>
-<modDesc descVersion="61">
+<modDesc descVersion="74">
     <author>Dennis B</author>
     <version>1.0.0.0</version>
 
     <title>
-        <en>Fly pathfinding "library" mod</en>
+        <en>Fly Pathfinding "Library" Mod</en>
     </title>
 
     <description>
-        <en>3D pathfinding with an octree and A* pathfinding, to be used together with other mods that utilizes it. NOT a standalone mod!</en>
+        <en><![CDATA[
+3D pathfinding with an octree, A* pathfinding and Catmull-Rom, to be used together with other mods that utilizes it. NOT a standalone mod!
+    ]]></en>
     </description>
 
+	<iconFilename>icon_flypathfinding.dds</iconFilename>
     <l10n filenamePrefix="translations/l10n"/>
     <multiplayer supported="true"/>
 
@@ -19,19 +22,16 @@
         <sourceFile filename="scripts/gridMap3D.lua" />
         <sourceFile filename="scripts/states/gridMap3DStates.lua" />
         <sourceFile filename="scripts/aStar.lua" />
+        <sourceFile filename="scripts/debug/aStarDebug.lua" />
+        <sourceFile filename="scripts/catmullRomSpline.lua" />
+        <sourceFile filename="scripts/debug/catmullRomSplineDebug.lua" />
     </extraSourceFiles>
 
     <inputBinding>
-		<actionBinding action="GRIDMAP3D_DBG_OCTREE_LAYER_DOWN">
+        <actionBinding action="FLYPATHFINDING_DBG_PREVIOUS">
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_lshift KEY_lalt KEY_KP_minus" />
 		</actionBinding>
-		<actionBinding action="GRIDMAP3D_DBG_OCTREE_LAYER_UP">
-			<binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_lshift KEY_lalt KEY_KP_plus" />
-		</actionBinding>
-        <actionBinding action="FLYPATHFINDING_DBG_ASTAR_PATH_PREVIOUS">
-			<binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_lshift KEY_lalt KEY_KP_minus" />
-		</actionBinding>
-		<actionBinding action="FLYPATHFINDING_DBG_ASTAR_PATH_NEXT">
+		<actionBinding action="FLYPATHFINDING_DBG_NEXT">
 			<binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_lshift KEY_lalt KEY_KP_plus" />
 		</actionBinding>
         <actionBinding action="FLYPATHFINDING_DBG_ASTAR_SHOW_CLOSEDNODES">
@@ -40,10 +40,8 @@
     </inputBinding>
 
 	<actions>
-		<action name="GRIDMAP3D_DBG_OCTREE_LAYER_DOWN" />
-		<action name="GRIDMAP3D_DBG_OCTREE_LAYER_UP" />
-		<action name="FLYPATHFINDING_DBG_ASTAR_PATH_PREVIOUS" />
-		<action name="FLYPATHFINDING_DBG_ASTAR_PATH_NEXT" />
+		<action name="FLYPATHFINDING_DBG_PREVIOUS" />
+		<action name="FLYPATHFINDING_DBG_NEXT" />
 		<action name="FLYPATHFINDING_DBG_ASTAR_SHOW_CLOSEDNODES" />
 	</actions>
 

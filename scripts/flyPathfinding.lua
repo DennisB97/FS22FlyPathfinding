@@ -10,12 +10,15 @@ g_GridMap3D = nil
 --- loadMap is FS22 function called after loading or creating a new save game.
 function FlyPathfinding:loadMap(savegame)
 
-    -- for now create on server only the navigation grid
-    if g_server ~= nil or g_dedicatedServerInfo ~= nil and g_GridMap3D == nil then
+    -- create on server only the navigation grid
+    if g_server ~= nil and g_GridMap3D == nil then
         g_GridMap3D = GridMap3D.new()
         -- adds a debugging console command to be able to visualize the octree and A* pathfinding.
         addConsoleCommand( 'GridMap3DOctreeDebug', 'toggle debugging for octree', 'octreeDebugToggle', g_GridMap3D)
-        addConsoleCommand( 'AStarFlypathfindingDebug', 'toggle debugging for pathfinding', 'aStarDebugToggle', AStar)
+        addConsoleCommand( 'AStarFlypathfindingDebug', 'toggle debugging for AStar pathfinding', 'aStarDebugToggle', AStar)
+        addConsoleCommand( 'AStarFlypathfindingDebugPathCreate', 'Given two vector positions creates a debug path between those', 'aStarDebugPathCreate', AStarDebug)
+        addConsoleCommand( 'CatmullRomDebug', 'toggle debugging for catmullrom', 'catmullRomDebugToggle', CatmullRomSplineCreator)
+        addConsoleCommand( 'CatmullRomDebugSplineCreate', 'given at least 2 x y z points creates a catmullrom', 'catmullRomDebugSplineCreate', CatmullRomDebug)
         g_GridMap3D:register(true)
     end
 
@@ -31,7 +34,6 @@ function FlyPathfinding:deleteMap(savegame)
 
     g_GridMap3D = nil
 end
-
 
 --- Hook after the farmlandmanager's loadmapdata, where the g_currentMission and g_currentMission.terrainNode will be at least valid.
 -- Handles initing the class for 3d navigation grid.

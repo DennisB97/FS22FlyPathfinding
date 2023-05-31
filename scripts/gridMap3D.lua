@@ -94,52 +94,48 @@ function GridMap3DNode.new(x,y,z,parent,size)
     return self
 end
 
---- isSolid checks if the provided node is solid or not.
---@param node is the node to be checked, type of GridMap3DNode table.
---@return true if the node was solid.
-function GridMap3DNode.isSolid(node)
-    if node == nil then
-        return true
+--- isNodeSolid checks if the provided node/leaf voxel is solid or not.
+--@param gridNode is the node to be checked, type of table {GridMap3DNode,leaf voxel index -1 - 63}.
+--@return true if the node or leaf voxel is solid.
+function GridMap3DNode.isNodeSolid(gridNode)
+    if gridNode == nil or gridNode[1] == nil then
+        return false
     end
 
-    if node.children == nil then
-        if (node.leafVoxelsBottom ~= nil and node.leafVoxelsBottom ~= 0) or (node.leafVoxelsTop ~= nil and node.leafVoxelsTop ~= 0) then
-            return true
+    if gridNode[1].children == nil and GridMap3DNode.isLeaf(gridNode[1]) then
+        if gridNode[2] < 0 then
+
+            if gridNode[1].leafVoxelsBottom ~= 0 or gridNode[1].leafVoxelsTop ~= 0 then
+                return true
+            else
+                return false
+            end
+
         else
+
+            if gridNode[2] > 31 then
+                -- as the top and bottom is split into two variables need to - 32 the top to get into 0-32 range too. But the index goes between 0-63.
+                local bitState = bitAND(math.floor(gridNode[1].leafVoxelsTop / (math.pow(2,gridNode[2] - 32))), 1)
+                if bitState ~= 0 then
+                    return true
+                end
+
+            else
+
+                local bitState = bitAND(math.floor(gridNode[1].leafVoxelsBottom / (math.pow(2,gridNode[2]))), 1)
+                if bitState ~= 0 then
+                    return true
+                end
+            end
             return false
         end
+    elseif gridNode[1].children == nil then
+        return false
     end
 
     return true
 end
 
---- isLeafVoxelSolidAt is called to check a single voxel within a leaf node if it is solid or not.
---@param node is the GridMap3DNode leaf node to be checked.
---@param index is the leaf voxel index to be checked within the leaf node.
-function GridMap3DNode.isLeafVoxelSolidAt(node,index)
-    if node == nil or index == nil then
-        return false
-    end
-
-    if index > 31 then
-        -- as the top and bottom is split into two variables need to - 32 the top to get into 0-32 range too. But the index goes between 0-63.
-        local bitState = bitAND(math.floor(node.leafVoxelsTop / (math.pow(2,index - 32))), 1)
-        if bitState ~= 0 then
-            return true
-        end
-
-    else
-
-        local bitState = bitAND(math.floor(node.leafVoxelsBottom / (math.pow(2,index))), 1)
-        if bitState ~= 0 then
-            return true
-        end
-
-    end
-
-
-    return false
-end
 
 --- isUnderTerrain called to find out if the node is completely under the terrain.
 -- For any node that is not a leaf node, has spare variables of the leaf node's voxels to use, so uses the leafVoxelsBottom and sets it to -1.
@@ -148,7 +144,7 @@ end
 --@return bool value indicating if node is completely under terrain or not.
 function GridMap3DNode.isUnderTerrain(node)
     if node == nil then
-        return true
+        return false
     end
 
     if node.leafVoxelsBottom == nil and node.leafVoxelsTop == -1 then
@@ -158,31 +154,13 @@ function GridMap3DNode.isUnderTerrain(node)
     return false
 end
 
-
-function GridMap3DNode.getLeafVoxelLocation(node,index)
-    if node == nil or g_GridMap3D == nil or index == nil or index < 0 or index > 63 then
-        return 0,0,0
-    end
-
-    local startPositionX = node.positionX - g_GridMap3D.maxVoxelResolution - (g_GridMap3D.maxVoxelResolution / 2)
-    local startPositionY = node.positionY - g_GridMap3D.maxVoxelResolution - (g_GridMap3D.maxVoxelResolution / 2)
-    local startPositionZ = node.positionZ - g_GridMap3D.maxVoxelResolution - (g_GridMap3D.maxVoxelResolution / 2)
-
-    local yIndex = math.floor(index / 16)
-    local zIndex = math.floor((index - (yIndex * 16)) / 4)
-    local xIndex = index - (yIndex * 16) - (zIndex * 4)
-    return startPositionX + (g_GridMap3D.maxVoxelResolution * xIndex), startPositionY + (g_GridMap3D.maxVoxelResolution * yIndex), startPositionZ + (g_GridMap3D.maxVoxelResolution * zIndex)
-
-end
-
-
 --- isLeafFullSolid checks if the provided leaf node is fully solid.
 --@param node is the node to be checked, type of GridMap3DNode table.
 --@return true if the node was fully solid.
 function GridMap3DNode.isLeafFullSolid(node)
 
-    if node == nil then
-        return true
+    if node == nil and GridMap3DNode.isLeaf(node) == false then
+        return false
     end
 
     -- all 32 LSB are 1, fully solid in this case
@@ -218,7 +196,7 @@ end
 --@param aabb2 is the second bounding box.
 --@return true if two provided boxes intersect.
 function GridMap3DNode.checkAABBIntersection(aabb1, aabb2)
-    if aabb1 == nil or aabb2 == nil or #aabb1 ~= 6 or #aabb2 ~= 6 then
+    if aabb1 == nil or aabb2 == nil then
         return false
     end
 
@@ -231,17 +209,15 @@ end
 
 --- checkPointInAABB simple helper function to find if a point is inside box.
 -- aabb provided as table as following , minX,minY,minZ,maxX,maxY,maxZ.
---@param px is the point's x coordinate.
---@param py is the point's y coordinate.
---@param pz is the point's z coordinate.
+--@param point is the point's coordinates, given as {x=,y=,z=}.
 --@param aabb is the bounding box.
 --@return true if point is inside provided box.
-function GridMap3DNode.checkPointInAABB(px, py, pz, aabb)
-    if px == nil or py == nil or pz == nil or aabb == nil or #aabb ~= 6 then
+function GridMap3DNode.checkPointInAABB(point, aabb)
+    if point == nil or aabb == nil then
         return false
     end
 
-    if px >= aabb[1] and px <= aabb[4] and py >= aabb[2] and py <= aabb[5] and pz >= aabb[3] and pz <= aabb[6] then
+    if point.x >= aabb[1] and point.x <= aabb[4] and point.y >= aabb[2] and point.y <= aabb[5] and point.z >= aabb[3] and point.z <= aabb[6] then
         return true
     else
         return false
@@ -250,7 +226,7 @@ end
 
 --- getRandomPoint is called to receive a random x,y,z location within the node provided.
 --@param node is the node within a location is received.
---@return x,y,z coordinates of a point within the node.
+--@return x,y,z in a hash table, coordinates of a point within the node.
 function GridMap3DNode.getRandomPoint(node)
 
     if node == nil then
@@ -261,8 +237,7 @@ function GridMap3DNode.getRandomPoint(node)
     local randomY = math.random(node.positionY - (node.size/2), node.positionY + (node.size/2))
     local randomZ = math.random(node.positionZ - (node.size/2), node.positionZ + (node.size/2))
 
-    return randomX,randomY,randomZ
-
+    return {x = randomX,y = randomY,z = randomZ}
 end
 
 
@@ -284,7 +259,7 @@ function GridMap3DUpdate.new(id,x,y,z,aabb,isDeletion)
     self.positionZ = z
     self.id = id
     self.aabb = aabb
-    self.bDeletion = isDeletion or false
+    self.bDeletion = (isDeletion ~= nil and {isDeletion} or {false})[1]
     return self
 end
 
@@ -292,7 +267,6 @@ end
 ---@class GridMap3D.
 --Custom object class for the 3d navigation grid.
 GridMap3D = {}
-GridMap3D.className = "GridMap3D"
 GridMap3D_mt = Class(GridMap3D,Object)
 InitObjectClass(GridMap3D, "GridMap3D")
 
@@ -304,7 +278,7 @@ function GridMap3D.new(customMt)
         return
     end
 
-    local self = Object.new(g_server ~= nil or g_dedicatedServerInfo ~= nil,g_client ~= nil, customMt or GridMap3D_mt)
+    local self = Object.new(g_server ~= nil,g_client ~= nil, customMt or GridMap3D_mt)
     -- nodeTree will contain the root node of the octree which then has references to deeper nodes.
     self.nodeTree = {}
     self.terrainSize = 2048
@@ -365,16 +339,14 @@ function GridMap3D.new(customMt)
     -- subscribe to the own UPDATEREADY message, so that the grid can be tried to be updated.
     g_messageCenter:subscribe(MessageType.GRIDMAP3D_GRID_UPDATEREADY,GridMap3D.onGridNeedUpdate,self)
 
-    self:loadConfig()
-
     -- Creates all the needed states and changes to the prepare state initially.
-    table.insert(self.gridMap3DStates,GridMap3DStatePrepare.new())
+    self.gridMap3DStates[self.EGridMap3DStates.PREPARE] = GridMap3DStatePrepare.new()
     self.gridMap3DStates[self.EGridMap3DStates.PREPARE]:init(self)
-    table.insert(self.gridMap3DStates,GridMap3DStateGenerate.new())
+    self.gridMap3DStates[self.EGridMap3DStates.GENERATE] = GridMap3DStateGenerate.new()
     self.gridMap3DStates[self.EGridMap3DStates.GENERATE]:init(self)
-    table.insert(self.gridMap3DStates,GridMap3DStateDebug.new())
+    self.gridMap3DStates[self.EGridMap3DStates.DEBUG] = GridMap3DStateDebug.new()
     self.gridMap3DStates[self.EGridMap3DStates.DEBUG]:init(self)
-    table.insert(self.gridMap3DStates,GridMap3DStateUpdate.new())
+    self.gridMap3DStates[self.EGridMap3DStates.UPDATE] = GridMap3DStateUpdate.new()
     self.gridMap3DStates[self.EGridMap3DStates.UPDATE]:init(self)
 
     registerObjectClassName(self, "GridMap3D")
@@ -393,7 +365,7 @@ function GridMap3D:init()
             self.currentGridState = self.EGridMap3DStates.UNDEFINED
             return false
         end
-
+        self:loadConfig()
         self:changeState(self.EGridMap3DStates.PREPARE)
         return true
     end
@@ -406,6 +378,8 @@ function GridMap3D:loadConfig()
     local filePath = Utils.getFilename("config/config.xml", FlyPathfinding.modDir)
     local xmlFile = loadXMLFile("TempXML", filePath)
 
+    -- Multiplies the maxOctreePreLoops and maxOctreeGenerationLoopsPerUpdate if on dedicated server by this value
+    local dedicatedScalingFactor = nil
     -- Highest resolution leaf voxels in the octree, given in meters
     self.maxVoxelResolution = 1
     -- How many loops to do initially when loading into the game, helps to avoid creating the octree very long while the game is properly running.
@@ -414,6 +388,10 @@ function GridMap3D:loadConfig()
     self.maxOctreeGenerationLoopsPerUpdate = 20
 
     if xmlFile ~= nil then
+
+        if getXMLString(xmlFile, "Config.octreeConfig#dedicatedScalingFactor") ~= nil then
+            dedicatedScalingFactor = getXMLFloat(xmlFile,"Config.octreeConfig#dedicatedScalingFactor")
+        end
         if getXMLString(xmlFile, "Config.octreeConfig#maxVoxelResolution") ~= nil then
             self.maxVoxelResolution = getXMLFloat(xmlFile,"Config.octreeConfig#maxVoxelResolution")
         end
@@ -423,10 +401,20 @@ function GridMap3D:loadConfig()
         if getXMLString(xmlFile, "Config.octreeConfig#maxOctreeGenerationLoopsPerUpdate") ~= nil then
             self.maxOctreeGenerationLoopsPerUpdate = getXMLInt(xmlFile,"Config.octreeConfig#maxOctreeGenerationLoopsPerUpdate")
         end
+
+    end
+
+    if g_currentMission ~= nil and g_currentMission.connectedToDedicatedServer then
+        dedicatedScalingFactor = MathUtil.clamp(dedicatedScalingFactor or 4,1,10)
+    else
+        dedicatedScalingFactor = 1
     end
 
     -- leaf node is four times the size of the highest resolution, as leaf node contains the highest resolution in a 4x4x4 grid.
     self.leafNodeResolution = self.maxVoxelResolution * 4
+
+    self.maxOctreePreLoops = self.maxOctreePreLoops * dedicatedScalingFactor
+    self.maxOctreeGenerationLoopsPerUpdate = self.maxOctreeGenerationLoopsPerUpdate * dedicatedScalingFactor
 
 end
 
@@ -504,17 +492,6 @@ function GridMap3D:delete()
     GridMap3D:superClass().delete(self)
 
     unregisterObjectClassName(self)
-end
-
---- getVectorDistance tiny helper function to get the distance between two vectors.
---@param x is the first vector's x coordinate.
---@param y is the first vector's y coordinate.
---@param z is the first vector's z coordinate.
---@param x2 is the second vector's x coordinate.
---@param y2 is the second vector's y coordinate.
---@param z2 is the second vector's z coordinate.
-function GridMap3D.getVectorDistance(x,y,z,x2,y2,z2)
-    return math.sqrt(math.pow((x - x2),2) + math.pow((y - y2),2) + math.pow((z - z2),2))
 end
 
 --- changeState changes the grid's state.
@@ -642,7 +619,7 @@ function GridMap3D:onPlaceableModified(placeable,isDeletion)
     local newWork = GridMap3DUpdate.new(placeable.rootNode,x,y,z,{x - 50, y - 50, z - 50, x + 50, y + 50, z + 50},isDeletion)
 
 
-    if placeable.spec_placement ~= nil and placeable.spec_placement.testAreas ~= nil and #placeable.spec_placement.testAreas > 0 then
+    if placeable.spec_placement ~= nil and placeable.spec_placement.testAreas ~= nil and next(placeable.spec_placement.testAreas) ~= nil then
         -- init beyond possible coordinate ranges
         local minX,minY,minZ,maxX,maxY,maxZ = 99999,99999,99999,-99999,-99999,-99999
 
@@ -696,54 +673,132 @@ function GridMap3D:getNodeTreeLayer(size)
     return ((math.log(dividedBy)) / (math.log(2))) + 1
 end
 
---- getGridNode is a function to find the node of the octree which given point resides in.
---@return The GridMap3DNode of where the given point resides in, as it can be inside leaf node's voxels the return is given as {node,voxelIndex}.
-function GridMap3D:getGridNode(x,y,z,returnNodeIfSolid)
-    if x == nil or y == nil or z == nil or self.nodeTree == nil or self:isAvailable() == false then
-        return
+--- getNodeLocation called to get location of the given node either node location or leaf voxel location.
+--@param gridNode is given as table of {GridMap3DNode,leaf voxel index (-1 - 63)}.
+--@return table of {x=,y=,z=} representing the location of given node.
+function GridMap3D:getNodeLocation(gridNode)
+    if gridNode == nil or gridNode[1] == nil then
+        return {x=0,y=0,z=0}
     end
 
-    local currentNode = self.nodeTree
+    if gridNode[2] == -1 then
+        return {x = gridNode[1].positionX, y = gridNode[1].positionY, z = gridNode[1].positionZ }
+    end
+
+    local startPositionX = gridNode[1].positionX - self.maxVoxelResolution - (self.maxVoxelResolution / 2)
+    local startPositionY = gridNode[1].positionY - self.maxVoxelResolution - (self.maxVoxelResolution / 2)
+    local startPositionZ = gridNode[1].positionZ - self.maxVoxelResolution - (self.maxVoxelResolution / 2)
+
+    local yIndex = math.floor(gridNode[2] / 16)
+    local zIndex = math.floor((gridNode[2] - (yIndex * 16)) / 4)
+    local xIndex = gridNode[2] - (yIndex * 16) - (zIndex * 4)
+    return {x = startPositionX + (self.maxVoxelResolution * xIndex),y = startPositionY + (self.maxVoxelResolution * yIndex),z = startPositionZ + (self.maxVoxelResolution * zIndex)}
+
+end
+
+--- getNodeSize called to get size of the given node either normal node or leaf voxel size.
+--@param gridNode is given as table of {GridMap3DNode,leaf voxel index (-1 - 63)}.
+--@return size as number.
+function GridMap3D:getNodeSize(gridNode)
+    if gridNode == nil or gridNode[1] == nil then
+        return 0
+    end
+
+    if gridNode[2] == -1 then
+        return gridNode[1].size
+    else
+        return self.maxVoxelResolution
+    end
+
+end
+
+--- clampToGrid is used to clamp a given position into within the octree grid coordinates with a 10cm safe margin.
+--@param position is the location what wants to be clamped to make sure it is within octree grid coordinates, given as {x=,y=,z=}
+--@return returns the new position
+function GridMap3D:clampToGrid(position)
+
+    if self:isAvailable() == false then
+        Logging.info("Could not clamp position to grid as grid is not yet ready")
+        return position
+    end
+
+    local gridMinX = self.nodeTree.children[1].positionX - (self.nodeTree.children[1].size / 2) + 0.1
+    local gridMinY = self.nodeTree.children[1].positionY - (self.nodeTree.children[1].size / 2) + 0.1
+    local gridMinZ = self.nodeTree.children[1].positionZ - (self.nodeTree.children[1].size / 2) + 0.1
+    local gridMaxX = self.nodeTree.children[2].positionX + (self.nodeTree.children[1].size / 2) - 0.1
+    local gridMaxY = self.nodeTree.children[5].positionY + (self.nodeTree.children[1].size / 2) - 0.1
+    local gridMaxZ = self.nodeTree.children[3].positionZ + (self.nodeTree.children[1].size / 2) - 0.1
+
+    local newPosition = {}
+    newPosition.x = MathUtil.clamp(position.x,gridMinX,gridMaxX)
+    newPosition.y = MathUtil.clamp(position.y,gridMinY,gridMaxY)
+    newPosition.z = MathUtil.clamp(position.z,gridMinZ,gridMaxZ)
+    return newPosition
+end
+
+
+--- getGridNode is a function to find the node of the octree which given point resides in.
+--@param position is the given location which should reside inside a grid node to be seeked, given as {x=,y=,z=}.
+--@param returnNodeIfSolid is a bool that can be used to return {nil,-1} in a case where the position was a residing in a solid or completely under terrain node/leaf voxel.
+--@param customRootNode if a custom start root node is given then it starts to look from within that octree node downwards instead of octree root.
+--@return The GridMap3DNode of where the given point resides in, as it can be inside leaf node's voxels the return is given as {node,voxelIndex}.
+function GridMap3D:getGridNode(position,returnNodeIfSolid,customRootNode)
+    if position == nil or self.nodeTree == nil or self:isAvailable() == false then
+        return {nil,-1}
+    end
+
+    local currentNode = customRootNode or self.nodeTree
 
     local aabbParentNode = {currentNode.positionX - (currentNode.size / 2), currentNode.positionY - (currentNode.size / 2), currentNode.positionZ - (currentNode.size / 2),currentNode.positionX + (currentNode.size / 2),
         currentNode.positionY + (currentNode.size / 2), currentNode.positionZ + (currentNode.size / 2) }
 
-    if GridMap3DNode.checkPointInAABB(x,y,z,aabbParentNode) == false then
+    if GridMap3DNode.checkPointInAABB(position,aabbParentNode) == false then
+        DebugUtil.printTableRecursively(currentNode)
+        Logging.info("aabbParentNode was minX:%f minY:%f minZ:%f maxX:%f maxY:%f maxZ:%f ",aabbParentNode[1],aabbParentNode[2],aabbParentNode[3],aabbParentNode[4],aabbParentNode[5],aabbParentNode[6])
+        Logging.info("position was X:%f Y:%f Z:%f ",position.x,position.y,position.z)
+        Logging.info("GridMap3D:getGridNode: Given position was not inside the grid!")
         return {nil,-1}
     end
 
-    if currentNode.children == nil then
+    if currentNode.children == nil and GridMap3DNode.isUnderTerrain(currentNode) and returnNodeIfSolid == false then
+        return {nil,-1}
+    elseif currentNode.children == nil then
         return {currentNode,-1}
     end
-
 
     while true do
 
         -- need to check the voxels in 2 x 32 bits
         if currentNode.size == self.leafNodeResolution then
             if GridMap3DNode.isLeafFullSolid(currentNode) then
-                if returnNodeIfSolid == true then
-                    return {currentNode , -1}
+                if returnNodeIfSolid then
+                    return {currentNode,-1}
                 else
                     return {nil,-1}
                 end
+            elseif GridMap3DNode.isNodeSolid({currentNode,-1}) == false then
+                return {currentNode,-1}
             end
 
-            for i = 0, 63 do
+            local nodeCornerOrigin = {}
+            nodeCornerOrigin.x = currentNode.positionX - self.maxVoxelResolution * 2
+            nodeCornerOrigin.y = currentNode.positionY - self.maxVoxelResolution * 2
+            nodeCornerOrigin.z = currentNode.positionZ - self.maxVoxelResolution * 2
 
-                local xLoc,yLoc,zLoc = GridMap3DNode.getLeafVoxelLocation(currentNode,i)
-                local aabbLeafVoxelNode = {xLoc - (self.maxVoxelResolution / 2), yLoc - (self.maxVoxelResolution / 2), zLoc - (self.maxVoxelResolution / 2),
-                    xLoc + (self.maxVoxelResolution / 2), yLoc + (self.maxVoxelResolution / 2), zLoc + (self.maxVoxelResolution / 2) }
+            local voxelIndexX = math.floor((position.x - nodeCornerOrigin.x) / self.maxVoxelResolution)
+            local voxelIndexY = math.floor((position.y - nodeCornerOrigin.y) / self.maxVoxelResolution) * 16
+            local voxelIndexZ = math.floor((position.z - nodeCornerOrigin.z) / self.maxVoxelResolution) * 4
+            local voxelIndex = voxelIndexX + voxelIndexY + voxelIndexZ
 
-                if GridMap3DNode.checkPointInAABB(x,y,z,aabbLeafVoxelNode) == true then
-                    if GridMap3DNode.isLeafVoxelSolidAt(currentNode,i) and returnNodeIfSolid ~= true then
-                        return {nil,-1}
-                    end
+            if GridMap3DNode.isNodeSolid({currentNode,voxelIndex}) and returnNodeIfSolid == false then
+                return {nil,-1}
 
-                    return {currentNode , i}
-                end
+            else
+                return {currentNode,voxelIndex}
             end
 
+        elseif currentNode.children == nil and GridMap3DNode.isUnderTerrain(currentNode) and returnNodeIfSolid == false then
+            return {nil,-1}
         elseif currentNode.children == nil then
             return {currentNode,-1}
         end
@@ -753,7 +808,7 @@ function GridMap3D:getGridNode(x,y,z,returnNodeIfSolid)
             aabbChildNode = {childNode.positionX - (childNode.size / 2), childNode.positionY - (childNode.size / 2), childNode.positionZ - (childNode.size / 2),childNode.positionX + (childNode.size / 2),
             childNode.positionY + (childNode.size / 2), childNode.positionZ + (childNode.size / 2) }
 
-            if GridMap3DNode.checkPointInAABB(x,y,z,aabbChildNode) == true then
+            if GridMap3DNode.checkPointInAABB(position,aabbChildNode) == true then
                 currentNode = childNode
                 break
             end
@@ -765,6 +820,94 @@ function GridMap3D:getGridNode(x,y,z,returnNodeIfSolid)
     return {nil,-1}
 end
 
+--- Function is used to find the smallest octree node which contains all the given positions.
+--@param positionsTable is given positions to find node which encomppasess these, given as table of table {x=,y=,z=}.
+--@return returns the GridMap3DNode which encomppasses all the given positions.
+function GridMap3D:getGridNodeEncomppasingPositions(positionsTable)
+    if self.nodeTree == nil or positionsTable == nil then
+        return {nil,-1}
+    end
+
+    local currentNode = self.nodeTree
+
+    local aabbParentNode = {currentNode.positionX - (currentNode.size / 2), currentNode.positionY - (currentNode.size / 2), currentNode.positionZ - (currentNode.size / 2),currentNode.positionX + (currentNode.size / 2),
+        currentNode.positionY + (currentNode.size / 2), currentNode.positionZ + (currentNode.size / 2) }
+
+
+    for _, position in ipairs(positionsTable) do
+        if GridMap3DNode.checkPointInAABB(position,aabbParentNode) == false then
+            return {nil,-1}
+        end
+    end
+
+    if currentNode.children == nil then
+        return {currentNode,-1}
+    end
+
+
+    while true do
+        local bAllExists = true
+
+        if currentNode.size == self.leafNodeResolution then
+
+            for i = 0, 63 do
+
+                local leafPosition = self:getNodeLocation({currentNode,i})
+                local aabbLeafVoxelNode = {leafPosition.x - (self.maxVoxelResolution / 2), leafPosition.y - (self.maxVoxelResolution / 2), leafPosition.z - (self.maxVoxelResolution / 2),
+                    leafPosition.x + (self.maxVoxelResolution / 2), leafPosition.y + (self.maxVoxelResolution / 2), leafPosition.z + (self.maxVoxelResolution / 2) }
+
+                for _, position in ipairs(positionsTable) do
+                    bAllExists = true
+                    if GridMap3DNode.checkPointInAABB(position,aabbLeafVoxelNode) == false then
+                        bAllExists = false
+                        break
+                    end
+                end
+                -- if all positions were within the leaf voxel then this is the smallest node that encomppasses all given positions.
+                if bAllExists == true then
+                    return {currentNode,i}
+                end
+
+            end
+            -- if all points weren't within a leaf voxel then the leaf node itself is the smallest node that contains all given positions.
+            return {currentNode,-1}
+
+
+        elseif currentNode.children == nil then
+            return {currentNode,-1}
+        end
+
+        local newInnerNode = nil
+        for _ ,childNode in pairs(currentNode.children) do
+            bAllExists = true
+            aabbChildNode = {childNode.positionX - (childNode.size / 2), childNode.positionY - (childNode.size / 2), childNode.positionZ - (childNode.size / 2),childNode.positionX + (childNode.size / 2),
+            childNode.positionY + (childNode.size / 2), childNode.positionZ + (childNode.size / 2) }
+
+            for _, position in ipairs(positionsTable) do
+                if GridMap3DNode.checkPointInAABB(position,aabbChildNode) == false then
+                    bAllExists = false
+                    break
+                end
+            end
+
+            if bAllExists == true then
+                newInnerNode = childNode
+                break
+            end
+
+        end
+
+        -- A child node was found that contained all the given positions can proceed to look into that node.
+        if newInnerNode ~= nil then
+            currentNode = newInnerNode
+        else
+            -- if no child node contained all the positions then this current node is the wanted node that contains all the given positions.
+            return {currentNode,-1}
+        end
+
+    end
+
+end
 
 
 --- voxelOverlapCheck is called when a new node/leaf voxel need to be checked for collision.
@@ -813,6 +956,7 @@ function GridMap3D:voxelOverlapCheckCallback(hitObjectId)
         return true
     end
 
+    -- ignores trees, preferably would ignore roads and other thin objects close to terrain level but not sure if possible...
     if getHasClassId(hitObjectId,ClassIds.SHAPE) and bitAND(getCollisionMask(hitObjectId),CollisionFlag.TREE) ~= CollisionFlag.TREE
         and bitAND(getCollisionMask(hitObjectId),CollisionFlag.WATER) ~= CollisionFlag.WATER then
         self.bTraceVoxelSolid = true
@@ -847,8 +991,8 @@ function GridMap3D:createLeafVoxels(parent)
 
     for i = 0, 31 do
 
-        local posX,posY,posZ = GridMap3DNode.getLeafVoxelLocation(parent,i)
-        self:voxelOverlapCheck(posX,posY,posZ,self.maxVoxelResolution / 2)
+        local leafPosition = self:getNodeLocation({parent,i})
+        self:voxelOverlapCheck(leafPosition.x,leafPosition.y,leafPosition.z,self.maxVoxelResolution / 2)
         -- if voxel was solid then set the bit to 1
         if self.bTraceVoxelSolid == true or self.bBottomUnderTerrain == true or self.bUnderTerrain == true then
             parent.leafVoxelsBottom = bitOR(parent.leafVoxelsBottom,( 1 * 2^i))
@@ -856,8 +1000,8 @@ function GridMap3D:createLeafVoxels(parent)
     end
 
     for i = 32, 63 do
-        local posX,posY,posZ = GridMap3DNode.getLeafVoxelLocation(parent,i)
-        self:voxelOverlapCheck(posX,posY,posZ,self.maxVoxelResolution / 2)
+        local leafPosition = self:getNodeLocation({parent,i})
+        self:voxelOverlapCheck(leafPosition.x,leafPosition.y,leafPosition.z,self.maxVoxelResolution / 2)
         -- if voxel was solid then set the bit to 1
         if self.bTraceVoxelSolid == true or self.bBottomUnderTerrain == true or self.bUnderTerrain == true then
             parent.leafVoxelsTop = bitOR(parent.leafVoxelsTop,( 1 * 2^(i-32)))

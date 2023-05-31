@@ -343,7 +343,6 @@ function GridMap3DStateGenerate:iterateOctree()
             return true
         end
     elseif self.currentState == self.EInternalState.EXTERNALNEIGHBOURS then
-
         if self:doExternNeighbours() == true then
             self.currentState = self.EInternalState.CREATE
         end
@@ -360,9 +359,6 @@ function GridMap3DStateGenerate:finishGrid()
     local minutes = math.floor(self.generationTime / 60)
     local seconds = self.generationTime % 60
     Logging.info(string.format("GridMap3DStateGenerate done generating octree! Took around %d Minutes, %d Seconds",minutes,seconds))
-
-
-
 
     -- Change state to idle
     self.currentState = self.EInternalState.IDLE
@@ -436,7 +432,7 @@ function GridMap3DStateGenerate:increaseLayer()
     self.currentNodeIndex = 1
     self.nextLayerNodes = nil
     self.nextLayerNodes = {}
-    if #self.currentLayerNodes < 1 then
+    if next(self.currentLayerNodes) == nil then
         return true
     end
 
@@ -461,7 +457,7 @@ function GridMap3DStateGenerate:createChildren(parent)
     if self.owner.bUnderTerrain == true then
         parent.leafVoxelsTop = -1
         return
-    elseif self.owner.bTraceVoxelSolid == false then
+    elseif self.owner.bTraceVoxelSolid == false and self.owner.bCenterUnderTerrain == false then
         return
     end
 
@@ -548,7 +544,7 @@ function GridMap3DStateUpdate:update(dt)
     for i = 0, self.owner.maxOctreePreLoops do
         if not self.bFindNeighbours and self:updateGrid() == true then
 
-            if #self.nodesToCheck > 0 then
+            if next(self.nodesToCheck) ~= nil then
                 table.insert(self.currentLayerNodes,self.nodesToCheck[1])
                 table.remove(self.nodesToCheck,1)
                 return
@@ -591,7 +587,7 @@ function GridMap3DStateUpdate:receiveWork()
     -- Get the octree nodes which include the area that has been modified.
     self:getNodeToRedo()
 
-    if #self.nodesToCheck < 1 then
+    if next(self.nodesToCheck) == nil then
         self.owner:changeState(self.owner.EGridMap3DStates.IDLE)
         return
     end
@@ -671,7 +667,7 @@ function GridMap3DStateUpdate:updateGrid()
         self.currentNodeIndex = 1
         self.nextLayerNodes = nil
         self.nextLayerNodes = {}
-        if #self.currentLayerNodes < 1 then
+        if next(self.currentLayerNodes) == nil then
             return true
         end
 
@@ -693,7 +689,7 @@ function GridMap3DStateUpdate:checkForNonSolids(parent)
     local emptyAmount = {}
 
     for i = 1, 8 do
-        if GridMap3DNode.isSolid(parent.children[i]) == true then
+        if GridMap3DNode.isNodeSolid({parent.children[i],-1}) == true then
             return
         end
         table.insert(emptyAmount,true)
@@ -891,8 +887,8 @@ function GridMap3DStateDebug:enter()
 
     self.maxDebugLayer = self.owner:getNodeTreeLayer(self.owner.leafNodeResolution)
     if g_inputBinding ~= nil then
-        local _, _eventId = g_inputBinding:registerActionEvent(InputAction.GRIDMAP3D_DBG_OCTREE_LAYER_DOWN, self, self.decreaseDebugLayer, true, false, false, true, true, true)
-        local _, _eventId = g_inputBinding:registerActionEvent(InputAction.GRIDMAP3D_DBG_OCTREE_LAYER_UP, self, self.increaseDebugLayer, true, false, false, true, true, true)
+        local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_PREVIOUS, self, self.decreaseDebugLayer, true, false, false, true, true, true)
+        local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_NEXT, self, self.increaseDebugLayer, true, false, false, true, true, true)
     end
 
 end
@@ -932,6 +928,9 @@ end
 
 --- renderOctreeDebugView calls to gather the relevant nodes if refresh needed and then renders a debug cube for each node.
 function GridMap3DStateDebug:renderOctreeDebugView()
+    if self.owner == nil then
+        return
+    end
 
     -- node refresh is set to true if layer is changed or player moves enough distance
     if self.nodeRefreshNeeded then
@@ -954,13 +953,12 @@ function GridMap3DStateDebug:renderOctreeDebugView()
 
         for _,node in pairs(self.debugGrid) do
 
-            if GridMap3DNode.isSolid(node) and GridMap3DNode.isLeaf(node) then
+            if GridMap3DNode.isLeaf(node) and GridMap3DNode.isNodeSolid({node,-1}) then
 
                 for i = 0, 63 do
-
-                    if GridMap3DNode.isLeafVoxelSolidAt(node,i) then
-                        local posX,posY,posZ = GridMap3DNode.getLeafVoxelLocation(node,i)
-                        DebugUtil.drawSimpleDebugCube(posX, posY, posZ, self.owner.maxVoxelResolution, 1, 0, 0)
+                    if GridMap3DNode.isNodeSolid({node,i}) then
+                        local leafPosition = self.owner:getNodeLocation({node,i})
+                        DebugUtil.drawSimpleDebugCube(leafPosition.x, leafPosition.y, leafPosition.z, self.owner.maxVoxelResolution, 1, 0, 0)
                     end
                 end
             end
@@ -968,7 +966,7 @@ function GridMap3DStateDebug:renderOctreeDebugView()
         end
     else
         for _,node in pairs(self.debugGrid) do
-            if GridMap3DNode.isSolid(node) then
+            if GridMap3DNode.isNodeSolid({node,-1}) then
                 DebugUtil.drawSimpleDebugCube(node.positionX, node.positionY, node.positionZ, node.size, 1, 0, 0)
             end
         end
@@ -997,12 +995,12 @@ function GridMap3DStateDebug:printCurrentNodeInfo(node)
         return
     end
 
-
-    local playerX,playerY,playerZ = getWorldTranslation(g_currentMission.player.rootNode)
+    local playerPosition = {}
+    playerPosition.x,playerPosition.y,playerPosition.z = getWorldTranslation(g_currentMission.player.rootNode)
 
     local aabbNode = {node.positionX - (node.size / 2), node.positionY - (node.size / 2), node.positionZ - (node.size / 2),node.positionX + (node.size / 2), node.positionY + (node.size / 2), node.positionZ + (node.size / 2) }
 
-    if GridMap3DNode.checkPointInAABB(playerX,playerY,playerZ,aabbNode) == true then
+    if GridMap3DNode.checkPointInAABB(playerPosition,aabbNode) == true then
 
         -- need to cap it, as it could be one above the array index to indicate the leaf nodes voxel layers.
         local currentLayer = MathUtil.clamp(self.currentDebugLayer,1,self.maxDebugLayer)
@@ -1051,7 +1049,7 @@ end
 function GridMap3DStateDebug:updatePlayerDistance()
 
     local playerX,playerY,playerZ = getWorldTranslation(g_currentMission.player.rootNode)
-    local distance = GridMap3D.getVectorDistance(self.playerLastLocation.x,self.playerLastLocation.y,self.playerLastLocation.z,playerX,playerY,playerZ)
+    local distance = MathUtil.vector3Length(self.playerLastLocation.x - playerX,self.playerLastLocation.y - playerY,self.playerLastLocation.z - playerZ)
     if distance > self.playerLocationUpdateDistance then
         self.nodeRefreshNeeded = true
         self.playerLastLocation.x = playerX

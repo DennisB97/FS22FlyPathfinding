@@ -130,7 +130,7 @@ local gridLeafNodeChildPerDirection = {
             end
 
             -- if neighbour is same size as leaf node and not completely non-solid then can get the neighbouring leaf voxel
-            if node[1].xNeighbour ~= nil and node[1].xNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+            if node[1].xNeighbour ~= nil and node[1].xNeighbour.size == node[1].size and GridMap3DNode.isNodeSolid({node[1].xNeighbour,-1}) then
                     return {node[1].xNeighbour,node[2] - 3}
             -- else just takes the leaf node itself as possible open node
             elseif node[1].xNeighbour ~= nil then
@@ -144,7 +144,7 @@ local gridLeafNodeChildPerDirection = {
                 return {nil, -1}
             end
 
-            if node[1].zNeighbour ~= nil and node[1].zNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+            if node[1].zNeighbour ~= nil and node[1].zNeighbour.size == node[1].size and GridMap3DNode.isNodeSolid({node[1].zNeighbour,-1}) then
                     return {node[1].zNeighbour,node[2] - 12}
             elseif node[1].zNeighbour ~= nil then
                     return {node[1].zNeighbour,-1}
@@ -157,7 +157,7 @@ local gridLeafNodeChildPerDirection = {
                 return {nil, -1}
             end
 
-            if node[1].xMinusNeighbour ~= nil and node[1].xMinusNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+            if node[1].xMinusNeighbour ~= nil and node[1].xMinusNeighbour.size == node[1].size and GridMap3DNode.isNodeSolid({node[1].xMinusNeighbour,-1}) then
                     return {node[1].xMinusNeighbour,node[2] + 3}
             elseif node[1].xMinusNeighbour ~= nil then
                     return {node[1].xMinusNeighbour,-1}
@@ -170,7 +170,7 @@ local gridLeafNodeChildPerDirection = {
                 return {nil, -1}
             end
 
-            if node[1].zMinusNeighbour ~= nil and node[1].zMinusNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+            if node[1].zMinusNeighbour ~= nil and node[1].zMinusNeighbour.size == node[1].size and GridMap3DNode.isNodeSolid({node[1].zMinusNeighbour,-1}) then
                     return {node[1].zMinusNeighbour,node[2] + 12}
             elseif node[1].zMinusNeighbour ~= nil then
                     return {node[1].zMinusNeighbour,-1}
@@ -183,7 +183,7 @@ local gridLeafNodeChildPerDirection = {
                 return {nil, -1}
             end
 
-            if node[1].yNeighbour ~= nil and node[1].yNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+            if node[1].yNeighbour ~= nil and node[1].yNeighbour.size == node[1].size and GridMap3DNode.isNodeSolid({node[1].yNeighbour,-1}) then
                     return {node[1].yNeighbour,node[2] + 16 - 64}
             elseif node[1].yNeighbour ~= nil then
                     return {node[1].yNeighbour,-1}
@@ -196,7 +196,7 @@ local gridLeafNodeChildPerDirection = {
                 return {nil, -1}
             end
 
-            if node[1].yMinusNeighbour ~= nil and node[1].yMinusNeighbour.size == node[1].size and GridMap3DNode.isSolid(node[1]) then
+            if node[1].yMinusNeighbour ~= nil and node[1].yMinusNeighbour.size == node[1].size and GridMap3DNode.isNodeSolid({node[1].yMinusNeighbour,-1}) then
                     return {node[1].yMinusNeighbour,node[2] + 64 - 16}
             elseif node[1].yMinusNeighbour ~= nil then
                     return {node[1].yMinusNeighbour,-1}
@@ -237,10 +237,10 @@ local leafNodeAdvancementTable = {
             -- if current leaf voxel index indicates being on the edge, then new node is in outer neighbour
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {gridLeafNodeChildPerDirection[direction](node)}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
             -- if not on edge then the next leaf voxel is within this same node, increments the index only.
-            return {{node[1],node[2] + 1}}
+            return {node[1],node[2] + 1}
             end,
         [ENavDirection.EAST] = function(node,direction)
             if node == nil or node[1] == nil or node[2] < 0 then
@@ -249,10 +249,10 @@ local leafNodeAdvancementTable = {
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {gridLeafNodeChildPerDirection[direction](node)}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
 
-            return {{node[1],node[2] + 4}}
+            return {node[1],node[2] + 4}
             end,
         [ENavDirection.SOUTH] = function(node,direction)
             if node == nil or node[1] == nil or node[2] < 0 then
@@ -261,10 +261,10 @@ local leafNodeAdvancementTable = {
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {gridLeafNodeChildPerDirection[direction](node)}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
 
-            return {{node[1],node[2] - 1}}
+            return {node[1],node[2] - 1}
             end,
         [ENavDirection.WEST] = function(node,direction)
             if node == nil or node[1] == nil or node[2] < 0 then
@@ -273,10 +273,10 @@ local leafNodeAdvancementTable = {
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {gridLeafNodeChildPerDirection[direction](node)}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
 
-            return {{node[1],node[2] - 4}}
+            return {node[1],node[2] - 4}
             end,
         [ENavDirection.UP] = function(node,direction)
             if node == nil or node[1] == nil or node[2] < 0 then
@@ -285,10 +285,10 @@ local leafNodeAdvancementTable = {
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {gridLeafNodeChildPerDirection[direction](node)}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
 
-            return {{node[1],node[2] + 16}}
+            return {node[1],node[2] + 16}
             end,
         [ENavDirection.DOWN] = function(node,direction)
             if node == nil or node[1] == nil or node[2] < 0 then
@@ -297,10 +297,10 @@ local leafNodeAdvancementTable = {
 
             local wallLeafNodes = gridLeafNodeChildrenWallPerDirection[direction]()
             if wallLeafNodes[node[2]] ~= nil then
-                return {gridLeafNodeChildPerDirection[direction](node)}
+                return gridLeafNodeChildPerDirection[direction](node)
             end
 
-            return {{node[1],node[2] - 16}}
+            return {node[1],node[2] - 16}
             end,
 }
 
@@ -308,7 +308,7 @@ local leafNodeAdvancementTable = {
 ---@class AStarOpenQueue
 --Min max heap for the open nodes queue.
 AStarOpenQueue = {}
-AStarOpenQueue_mt = Class(AStarOpenQueue,Object)
+AStarOpenQueue_mt = Class(AStarOpenQueue)
 InitObjectClass(AStarOpenQueue, "AStarOpenQueue")
 
 --- new creates a new openqueue.
@@ -320,12 +320,13 @@ function AStarOpenQueue.new()
     -- the value will be another table where the leaf voxel index is the key.
     -- eg. self.hash[someGridNode][leafvoxelIndex] -- and then finally value is index into the self.openNodes.
     self.hash = {}
+    self.size = 0
     return self
 end
 
 --- getSize returns the size of the openqueue.
 function AStarOpenQueue:getSize()
-    return #self.openNodes
+    return self.size
 end
 --- getParent returns parent index.
 --@param i is the index from parent wanted.
@@ -344,9 +345,7 @@ function AStarOpenQueue:getRightChild(i)
 end
 --- empty cleans the openqueue for next path.
 function AStarOpenQueue:empty()
-    self.openNodes = nil
     self.openNodes = {}
-    self.hash = nil
     self.hash = {}
     self.size = 0
 end
@@ -364,7 +363,8 @@ function AStarOpenQueue:insert(node)
     end
 
     table.insert(self.openNodes,node)
-    local index = #self.openNodes
+    self.size = self.size + 1
+    local index = self.size
     -- need to make sure there is a second table within the self.hash if this gridNode has never been added before it would be nil.
     if self.hash[node.gridNode[1]] == nil then
         self.hash[node.gridNode[1]] = {}
@@ -385,19 +385,21 @@ end
 --- pop called to remove the root node which has the lowest f.
 --@return AStarNode which had the lowest f value in the openqueue, nil if empty.
 function AStarOpenQueue:pop()
-    if #self.openNodes < 1 then
+    if self.size < 1 then
         return nil
     end
 
-    if #self.openNodes == 1 then
+    if self.size == 1 then
         local node = table.remove(self.openNodes)
+        self.size = 0
         self.hash[node.gridNode[1]][node.gridNode[2]] = nil
         return node
     end
 
     local node = self.openNodes[1]
-    self:swap(1,#self.openNodes)
+    self:swap(1,self.size)
     table.remove(self.openNodes)
+    self.size = self.size - 1
     self.hash[node.gridNode[1]][node.gridNode[2]] = nil
     self:heapify(1)
     return node
@@ -461,7 +463,7 @@ end
 --@param index starting parent index from where to children will be checked and adjusted.
 function AStarOpenQueue:heapify(index)
 
-    if #self.openNodes <= 1 then
+    if self.size <= 1 then
         return
     end
 
@@ -469,11 +471,11 @@ function AStarOpenQueue:heapify(index)
     local rightIndex = self:getRightChild(index)
     local smallestIndex = index
 
-    if leftIndex <= #self.openNodes and self.openNodes[leftIndex].f < self.openNodes[index].f then
+    if leftIndex <= self.size and self.openNodes[leftIndex].f < self.openNodes[index].f then
         smallestIndex = leftIndex
     end
 
-    if rightIndex <= #self.openNodes and self.openNodes[rightIndex].f < self.openNodes[smallestIndex].f then
+    if rightIndex <= self.size and self.openNodes[rightIndex].f < self.openNodes[smallestIndex].f then
         smallestIndex = rightIndex
     end
 
@@ -505,133 +507,16 @@ function AStarNode.new(gridNode,g,h,parent, direction)
     return self
 end
 
-
----@class AStarDebug.
---Custom debugging object class for the A* pathfinding algorithm.
-AStarDebug = {}
-AStarDebug.className = "AStarDebug"
-AStarDebug_mt = Class(AStarDebug,Object)
-InitObjectClass(AStarDebug, "AStarDebug")
-
---- new creates a new AStarDebug object.
-function AStarDebug.new()
-    local self = Object.new(g_server ~= nil or g_dedicatedServerInfo ~= nil,g_client ~= nil, AStarDebug_mt)
-    self.debugPaths = {}
-    self.currentDebugPathIndex = 1
-    self.maxSavedDebugPaths = 5
-    self.bShowClosedNodes = false
-
-    if g_inputBinding ~= nil then
-        local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_ASTAR_PATH_PREVIOUS, self, self.debugPreviousPath, true, false, false, true, true, true)
-        local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_ASTAR_PATH_NEXT, self, self.debugNextPath, true, false, false, true, true, true)
-        local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_ASTAR_SHOW_CLOSEDNODES, self, self.toggleClosedNodes, true, false, false, true, true, true)
-    end
-
-    return self
-end
-
---- delete function called to clean up and remove input bindings from the debug functions.
-function AStarDebug:delete()
-
-    if g_inputBinding ~= nil then
-        g_inputBinding:removeActionEventsByTarget(self)
-    end
-    self.debugPaths = nil
-
-    AStarDebug:superClass().delete(self)
-end
-
---- debugNextPath is bound to keyinput to increase the currentDebugPathIndex.
-function AStarDebug:debugNextPath()
-    self.currentDebugPathIndex = MathUtil.clamp(self.currentDebugPathIndex + 1,1,#self.debugPaths)
-end
-
---- debugPreviousPath is bound to keyinput to decrease the currentDebugPathIndex.
-function AStarDebug:debugPreviousPath()
-    self.currentDebugPathIndex = MathUtil.clamp(self.currentDebugPathIndex - 1,1,#self.debugPaths)
-end
-
---- toggleClosedNodes is bound to keyinputs to toggle boolean to visualize the closed nodes or not.
-function AStarDebug:toggleClosedNodes()
-    self.bShowClosedNodes = not self.bShowClosedNodes
-end
-
---- addPath is called to add a path that can be visualized.
---@param path is the path finished, table of {x,y,z}.
---@param closedNodes is the nodes that were visited and closed in the path, closedNodes[gridNode][leafvoxelindex] = gridNode.
---@param closedNodeCount is the amount of closed nodes.
---@param timeTaken is around how long it took for the path to find goal (if goal was even reached).
-function AStarDebug:addPath(path,closedNodes,closedNodeCount,timeTaken)
-
-    if #self.debugPaths == self.maxSavedDebugPaths then
-        return
-    end
-
-    table.insert(self.debugPaths,{path,closedNodes})
-    self.currentDebugPathIndex = MathUtil.clamp(self.currentDebugPathIndex,1,#self.debugPaths)
-    if #self.debugPaths == 1 then
-        self:raiseActive()
-    end
-
-    if #self.debugPaths[#self.debugPaths][1] < 1 then
-        Logging.info(string.format("Path received! closed node count: %d , No path was able to be made!" ,closedNodeCount))
-    else
-        Logging.info(string.format("Path was finished! Time taken around: %f, closed node count: %d " ,timeTaken,closedNodeCount))
-    end
-end
-
---- update is called every tick if a path has been added, else raiseActive isn't called and this function does not run.
--- Debug visualizes the path from start to goal, and optionally shows all the closed nodes.
---@param dt is the deltaTime , not needed in this case.
-function AStarDebug:update(dt)
-    AStarDebug:superClass().update(self,dt)
-
-    if self.bShowClosedNodes and self.debugPaths[self.currentDebugPathIndex] ~= nil then
-        for _,indexHolder in pairs(self.debugPaths[self.currentDebugPathIndex][2]) do
-            for _,closedGridNode in pairs(indexHolder) do
-                if closedGridNode ~= nil then
-                    if closedGridNode[2] == -1 then
-                        DebugUtil.drawSimpleDebugCube(closedGridNode[1].positionX, closedGridNode[1].positionY, closedGridNode[1].positionZ, closedGridNode[1].size, 1, 0, 0)
-                    else
-                        local x,y,z = GridMap3DNode.getLeafVoxelLocation(closedGridNode[1],closedGridNode[2])
-                        DebugUtil.drawSimpleDebugCube(x, y, z, 1, 0, 0, 1)
-                    end
-                end
-            end
-        end
-    end
-
-    if self.debugPaths[self.currentDebugPathIndex] ~= nil then
-        self:raiseActive()
-        for i,location in ipairs(self.debugPaths[self.currentDebugPathIndex][1]) do
-            if i ~= 1 then
-                local startX = self.debugPaths[self.currentDebugPathIndex][1][i-1].x
-                local startY = self.debugPaths[self.currentDebugPathIndex][1][i-1].y
-                local startZ = self.debugPaths[self.currentDebugPathIndex][1][i-1].z
-                local endX = location.x
-                local endY = location.y
-                local endZ = location.z
-
-                DebugUtil.drawDebugLine(startX, startY, startZ,endX ,endY , endZ, 0, 1, 0, 1, false)
-            end
-        end
-    end
-
-
-end
-
-
 ---@class AStar.
 --Custom object class for the A* pathfinding algorithm.
 AStar = {}
-AStar.className = "AStar"
 AStar.debugObject = nil
 AStar_mt = Class(AStar,Object)
 InitObjectClass(AStar, "AStar")
 
 function AStar.aStarDebugToggle()
-    if g_GridMap3D == nil or g_GridMap3D.bOctreeDebug then
-        Logging.info("Can't turn on AStar flypathfinding debug at same time as Octree debug mode!")
+    if g_GridMap3D == nil or g_GridMap3D.bOctreeDebug or CatmullRomSpline.debugObject then
+        Logging.info("Can't turn on AStar flypathfinding debug at same time as Octree debug mode or catmullrom!")
         return
     end
 
@@ -647,8 +532,8 @@ end
 
 
 --- new creates a new A* pathfinding algorithm object.
-function AStar.new()
-    local self = Object.new(g_server ~= nil or g_dedicatedServerInfo ~= nil,g_client ~= nil, AStar_mt)
+function AStar.new(isServer,isClient)
+    local self = Object.new(isServer,isClient, AStar_mt)
     self.open = AStarOpenQueue.new()
     self.closed = {}
     self.goalGridNode = nil
@@ -657,10 +542,19 @@ function AStar.new()
     self.bFindNearest = false
     self.closedNodeCount = 0
     self.pathingTime = 0
-    self.goalPath = {}
+    self.goalPath = nil
     self.callback = nil
     self.realStartLocation = {}
     self.realGoalLocation = {}
+    self.maxSearchedNodes = 0
+    self.maxPathfindLoops = 0
+    self.defaultMaxPathfindLoops = 0
+    self.defaultMaxSearchedNodes = 0
+    self.bSmoothPath = true
+    self.bReachedGoal = false
+    self.bPathfinding = false
+    self.isDeleted = false
+    self.bTraceBlocked = false
     self:loadConfig()
     return self
 end
@@ -671,17 +565,35 @@ function AStar:loadConfig()
     local xmlFile = loadXMLFile("TempXML", filePath)
 
     -- If closed node list goes beyond this stops the search early.
-    self.maxSearchedNodes = 100000
+    self.defaultMaxSearchedNodes = 100000
     -- How many loops per update to run pathfinding.
-    self.maxPathfindLoops = 100
+    self.defaultMaxPathfindLoops = 20
+
+    -- This is used to change up to how big in meters grid nodes should still prefer to have heuristic estimate range to be closer than smaller nodes.
+    self.heuristicScalingMaxSize = 30
+
+    self.dedicatedScalingFactor = 4
 
     if xmlFile ~= nil then
+        if getXMLString(xmlFile, "Config.aStarConfig#dedicatedScalingFactor") ~= nil then
+            self.dedicatedScalingFactor = MathUtil.clamp(getXMLInt(xmlFile,"Config.aStarConfig#dedicatedScalingFactor") or self.dedicatedScalingFactor,1,10)
+        end
         if getXMLString(xmlFile, "Config.aStarConfig#maxSearchedNodes") ~= nil then
-            self.maxSearchedNodes = getXMLInt(xmlFile,"Config.aStarConfig#maxSearchedNodes")
+            self.defaultMaxSearchedNodes = getXMLInt(xmlFile,"Config.aStarConfig#maxSearchedNodes")
         end
         if getXMLString(xmlFile, "Config.aStarConfig#maxPathfindLoops") ~= nil then
-            self.maxPathfindLoops = getXMLInt(xmlFile,"Config.aStarConfig#maxPathfindLoops")
+            self.defaultMaxPathfindLoops = getXMLInt(xmlFile,"Config.aStarConfig#maxPathfindLoops")
         end
+
+        if getXMLString(xmlFile, "config.aStarConfig#heuristicScalingMaxSize") ~= nil then
+            self.heuristicScalingMaxSize = getXMLInt(xmlFile,"Config.aStarConfig#heuristicScalingMaxSize")
+        end
+    end
+
+    if self.isServer == true and g_currentMission ~= nil and g_currentMission.connectedToDedicatedServer then
+        dedicatedScalingFactor = MathUtil.clamp(dedicatedScalingFactor or 2,1,10)
+    else
+        dedicatedScalingFactor = 1
     end
 
 end
@@ -691,74 +603,142 @@ function AStar:clean()
     if self.open ~= nil then
         self.open:empty()
     end
-    self.closed = nil
     self.closed = {}
-    self.goalPath = nil
-    self.goalPath = {}
     self.bFindNearest = false
+    self.bSmoothPath = true
+    self.goalGridNode = nil
+    self.startGridNode = nil
+    self.realStartLocation = {}
+    self.realGoalLocation = {}
+    self.bestNode = nil
     self.closedNodeCount = 0
     self.pathingTime = 0
     self.callback = nil
-    self.goalGridNode = nil
-    self.startGridNode = nil
-    self.realStartLocation = nil
-    self.realStartLocation = {}
-    self.realGoalLocation = nil
-    self.realGoalLocation = {}
-
+    self.goalPath = nil
+    self.bReachedGoal = false
+    self.bPathfinding = false
 end
 
---- find is the function called from any object that wants to do pathfinding.
---@param x is the start x coordinate
---@param y is the start y coordinate
---@param z is the start z coordinate
---@param x2 is the end x coordinate
---@param y2 is the end y coordinate
---@param z2 is the end z coordinate
---@param findNearest is a bool to indicate if should return the closest path to goal if goal was not reached.
---@param allowSolidStart is a bool to indicate if it is okay if start location is inside a solid node.
---@param allowSolidGoal is a bool to indicate if it is okay if end location is inside a solid node.
---@param callback is a function that wants to be called after pathfinding is done, returns the path as parameter.
-function AStar:find(x,y,z,x2,y2,z2,findNearest,allowSolidStart,allowSolidGoal,callback)
+-- on deleting astar cleanup.
+function AStar:delete()
 
-    if g_GridMap3D == nil then
+    if self.isDeleted then
         return
     end
 
-    self.realStartLocation.x, self.realStartLocation.y, self.realStartLocation.z = x,y,z
-    self.realGoalLocation.x, self.realGoalLocation.y, self.realGoalLocation.z = x2,y2,z2
-    self.startGridNode = g_GridMap3D:getGridNode(x,y,z,allowSolidStart)
-    self.goalGridNode = g_GridMap3D:getGridNode(x2,y2,z2,allowSolidGoal)
+    self:interrupt()
+    self.isDeleted = true
 
-    if self.startGridNode[1] == nil or self.goalGridNode[1] == nil or (self.startGridNode[1] == self.goalGridNode[1] and self.startGridNode[2] == self.goalGridNode[2]) then
-        self:finishPathfinding()
+    AStar:superClass().delete(self)
+end
+
+--- isPathfinding called to check if currently pathfinding.
+--@return true if pathfinding.
+function AStar:isPathfinding()
+    return self.bPathfinding
+end
+
+--- find is the function called from any object that wants to do pathfinding.
+--@param startPosition is the start location of pathfinding, given as {x=,y=,z=}.
+--@param goalPosition is the goal location of pathfinding, given as {x=,y=,z=}.
+--@param findNearest is a bool to indicate if should return the closest path to goal if goal was not reached would return {path,false}.
+--@param allowSolidStart is a bool to indicate if it is okay if start location is inside a solid node.
+--@param allowSolidGoal is a bool to indicate if it is okay if end location is inside a solid node.
+--@param callback is a function that wants to be called after pathfinding is done, returns the path as parameter as {array of {x=,y=,z=},true/false if goal was found or not}.
+--@param smoothPath optional bool to indicate if the path should be automatically smoothed out a bit so no zigzag pattern.
+--@param customPathLoopAmount is an optional number of custom amount of loops per update to pathfind.
+--@param customSearchNodeLimit is an optional number of custom amount of maximum closed/visited nodes until search stops early as no path was found.
+--@return returns true if started searching for path without issues.
+function AStar:find(startPosition,goalPosition,findNearest,allowSolidStart,allowSolidGoal,callback,smoothPath,customPathLoopAmount,customSearchNodeLimit)
+
+    if g_GridMap3D == nil or startPosition == nil or goalPosition == nil or CatmullRomSpline.isNearlySamePosition(startPosition,goalPosition) then
+        return false
     end
 
-    local newPathNode = self:prepareNewNode(nil,self.startGridNode,ENavDirection.NORTH)
+    if self.bPathfinding then
+        Logging.info("Already AStar pathfinding, can't start another one without interrupting current!")
+        return false
+    end
 
-    self:addToOpen(newPathNode)
-    self.bestNode = newPathNode
-    self.bFindNearest = findNearest
+    allowSolidStart = (allowSolidStart ~= nil and {allowSolidStart} or {false})[1]
+    self.allowSolidGoal = (allowSolidGoal ~= nil and {allowSolidGoal} or {false})[1]
+    self.bSmoothPath = (smoothPath ~= nil and {smoothPath} or {true})[1]
+    self.maxSearchedNodes = customSearchNodeLimit or self.defaultMaxSearchedNodes
+    self.maxPathfindLoops = (customPathLoopAmount or self.defaultMaxPathfindLoops) * self.dedicatedScalingFactor
+    self.realStartLocation = startPosition
+    self.realGoalLocation = goalPosition
+    self.startGridNode = g_GridMap3D:getGridNode(startPosition,allowSolidStart)
+    self.goalGridNode = g_GridMap3D:getGridNode(goalPosition,allowSolidGoal)
+    self.bFindNearest = (findNearest ~= nil and {findNearest} or {true})[1]
     self.callback = callback
+
+    if self.startGridNode[1] == nil or self.goalGridNode[1] == nil then
+       return false
+    end
+
+    -- Open the first start node without a parent and direction
+    self:openNode(nil,self.startGridNode,nil)
+
+    self.bPathfinding = true
+
     self:raiseActive()
+    return true
 end
+
+--- interrupt can be called to stop pathfinding.
+--@param shouldCallback is a bool that can be set to return the path so far before interrupting.
+--@param newCallback is a new callback that can be given if the original is not to be called with the interrupted path.
+--@param returns true if interrupted a pathfinding in progress.
+function AStar:interrupt(shouldCallback,newCallback)
+    if not self.bPathfinding then
+        return false
+    end
+
+    if shouldCallback then
+        self.callback = newCallback or self.callback
+        if self.bSmoothPath then
+            self:postProcessPath(self.bestNode)
+        else
+            self:collectFinalPath(self.bestNode)
+        end
+
+        self:finishPathfinding()
+    else
+        self:clean()
+    end
+
+    return true
+end
+
 
 --- update here the pathfinding is looped per self.maxPathfindLoops, and raiseActive is only called when actually pathfinding.
 --@param dt is deltaTime, used to get estimated time it took to generate the path.
 function AStar:update(dt)
     AStar:superClass().update(self,dt)
 
-    if self.startGridNode ~= nil then
-        self:raiseActive()
+    if self.bPathfinding then
+
         self.pathingTime = self.pathingTime + (dt / 1000)
         for i = 0, self.maxPathfindLoops do
-            if self:doSearch() == true then
+            local finished, finishedNode = self:doSearch()
+            if finished then
+
+                if self.bReachedGoal or self.bFindNearest and finishedNode ~= nil then
+
+                    if self.bSmoothPath then
+                        self:postProcessPath(finishedNode)
+                    else
+                        self:collectFinalPath(finishedNode)
+                    end
+                end
+
                 self:finishPathfinding()
                 return
             end
         end
-    end
 
+        self:raiseActive()
+    end
 end
 
 --- finishPathfinding is called when pathfinding ends.
@@ -767,77 +747,76 @@ end
 function AStar:finishPathfinding()
 
     if AStar.debugObject ~= nil then
-        AStar.debugObject:addPath(self.goalPath,self.closed,self.closedNodeCount,self.pathingTime)
-    end
-    if self.callback ~= nil then
-        self.callback(self.goalPath)
+        AStar.debugObject:addPath({self.goalPath,self.bReachedGoal},self.closed,self.closedNodeCount,self.pathingTime)
     end
 
+    local aStarSearchResult = {self.goalPath,self.bReachedGoal}
+    local callBack = self.callback
+
     self:clean()
+
+    if callBack ~= nil then
+        callBack(aStarSearchResult)
+    end
+
 end
 
 --- doSearch is the function that handles iterating the path search.
+--@return bool, node. bool is true if done pathfinding and the node is the final node reached.
 function AStar:doSearch()
 
     local currentNode = self.open:pop()
 
-    -- if open queue is empty no goal was found, returns nearest if so wanted by the bool bFindNearest
+    -- if open queue is empty no goal was found
     if currentNode == nil then
-        if self.bFindNearest then
-            self:finalizePath(self.bestNode,false)
-        end
-        return true
+        return true,self.bestNode
     end
 
     -- Checks if current node is goal then can finalize path
     if self:isSameGridNode(currentNode.gridNode,self.goalGridNode) then
-        self:finalizePath(currentNode,true)
-        return true
+        self.bReachedGoal = true
+        return true, currentNode
     end
 
     self:addToClosed(currentNode)
-
-    -- track the best node so far
-    if currentNode.f  < self.bestNode.f then
-        if GridMap3DNode.isSolid(currentNode.gridNode[1]) == false or GridMap3DNode.isLeaf(currentNode.gridNode[1]) then
-            self.bestNode = currentNode
-        end
-    end
-
-    -- early exit if search goes too long
-    if self.closedNodeCount >= self.maxSearchedNodes then
-        self:finalizePath(self.bestNode,false)
-        return true
-    end
 
     -- if has higher resolution child nodes opens those and returns
     if currentNode.gridNode[1].children ~= nil then
         self:openChildren(currentNode)
         return false
-    elseif GridMap3DNode.isLeaf(currentNode.gridNode[1]) and currentNode.gridNode[2] == -1 and GridMap3DNode.isSolid(currentNode.gridNode[1]) then
+    elseif GridMap3DNode.isLeaf(currentNode.gridNode[1]) and currentNode.gridNode[2] == -1 and GridMap3DNode.isNodeSolid(currentNode.gridNode) then
         self:openLeafVoxels(currentNode)
         return false
     end
 
+    local bestNodeF = 9999999999
+    if self.bestNode ~= nil then
+        bestNodeF = self.bestNode.f
+    end
+
+    -- track the best node so far
+    if currentNode.f  < bestNodeF and currentNode.gridNode[1] ~= self.startGridNode[1] and currentNode.gridNode[2] ~= self.startGridNode[2] then
+        self.bestNode = currentNode
+    end
+
+    -- early exit if search goes too long
+    if self.closedNodeCount >= self.maxSearchedNodes then
+        return true, self.bestNode
+    end
+
     -- try to open new nodes in each available direction
     for _, direction in pairs(ENavDirection) do
-
+        local nextGridNode = nil
         -- if not within a leaf node's voxels then try open a normal node
         if currentNode.gridNode[2] == -1 then
-            local nextGridNode = nodeAdvancementTable[direction](currentNode.gridNode)
-            if nextGridNode[1] ~= nil then
-                local newNode = self:prepareNewNode(currentNode,nextGridNode,direction)
-                self:addToOpen(newNode)
-            end
+            nextGridNode = nodeAdvancementTable[direction](currentNode.gridNode)
         else
             -- within a leaf voxel so need to try get the next leaf voxel index to open
-            local leafVoxelNodes = leafNodeAdvancementTable[direction](currentNode.gridNode,direction)
-            for _,nextLeafVoxelNode in ipairs(leafVoxelNodes) do
-                if nextLeafVoxelNode[1] ~= nil then
-                    local newNode = self:prepareNewNode(currentNode,nextLeafVoxelNode,direction)
-                    self:addToOpen(newNode)
-                end
-            end
+            nextGridNode = leafNodeAdvancementTable[direction](currentNode.gridNode,direction)
+        end
+
+        if nextGridNode[1] ~= nil then
+            self:openNode(currentNode,nextGridNode,direction)
         end
 
     end
@@ -852,36 +831,44 @@ function AStar:openChildren(node)
         return
     end
 
-    -- get all the nodes along the edge on the opposite direction from direction this node was opened from
-    local newChildren = gridNodeChildrenWallPerDirection[mirroredDirectionTable[node.direction]](node.gridNode)
+    local newChildren = nil
+    if node.direction ~= nil then
+        -- get all the nodes along the edge on the opposite direction from direction this node was opened from
+        newChildren = gridNodeChildrenWallPerDirection[mirroredDirectionTable[node.direction]](node.gridNode)
 
-    if newChildren == nil then
-        return
+        if newChildren == nil then
+            return
+        end
+    else
+        for _,child in pairs(node.children) do
+            table.insert(newChildren,{child,-1})
+        end
     end
 
     for _, newChild in pairs(newChildren) do
-        local newPathNode = self:prepareNewNode(node.parent,newChild,node.direction)
-        self:addToOpen(newPathNode)
+        self:openNode(node.parent,newChild,node.direction)
     end
 
 end
 
 --- openLeafVoxels will be called to open the leaf voxels if given node is a leaf node and has some solid leaf voxels.
---@param is the AStarNode leaf node which has some solid leaf voxels.
+--@param node is the AStarNode leaf node which has some solid leaf voxels.
 function AStar:openLeafVoxels(node)
     if node == nil then
         return
     end
-
-    local newLeafVoxelIndices = gridLeafNodeChildrenWallPerDirection[mirroredDirectionTable[node.direction]]()
+    local newLeafVoxelIndices = {}
+    if node.direction ~= nil then
+        newLeafVoxelIndices = gridLeafNodeChildrenWallPerDirection[mirroredDirectionTable[node.direction]]()
+    else
+        newLeafVoxelIndices = {0,1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16,17,18,19,20,23,24,27,28,29,30,31,32,33,34,35,36,39,40,43,44,45,46,47,48,49,50,51,52,53,54,55,56,57,58,59,60,61,62,63}
+    end
 
     for _, newLeafVoxelIndex in pairs(newLeafVoxelIndices) do
-        local newPathNode = self:prepareNewNode(node.parent,{node.gridNode[1],newLeafVoxelIndex},node.direction)
-        self:addToOpen(newPathNode)
+        self:openNode(node.parent,{node.gridNode[1],newLeafVoxelIndex},node.direction)
     end
 
 end
-
 
 --- prepareNewNode will create a new AStarNode with the provided variables.
 --@param parent is the previous AStarNode.
@@ -889,7 +876,7 @@ end
 --@param direction is the direction taken from previous to this node.
 function AStar:prepareNewNode(parent,gridNode,direction)
 
-    local g = 1
+    local g = 0
     local h = 0
 
     -- g is a unit cost of 1 for every step.
@@ -903,37 +890,144 @@ function AStar:prepareNewNode(parent,gridNode,direction)
     return AStarNode.new(gridNode,g,h,parent,direction)
 end
 
---- finalizePath called to reverse the found path so it goes from start->end.
---@param node is the final node that was reached.
---@param isGoal indicates if the final node is the goal node.
-function AStar:finalizePath(node,isGoal)
 
-    if node == nil then
+--- collectFinalPath will be called instead of postProcessPath in case bSmoothPath is false.
+-- will just go through the linked list to make an array of {x=,y=,z=} positions of the path.
+--@param node is last node reached on search.
+function AStar:collectFinalPath(node)
+
+    if node == nil or g_GridMap3D == nil then
         return
     end
 
-    local currentNode = node
+    local path = {}
 
-    -- if final node reached is the goal then can add the real goal location as the location else it will be the octree node center location
-    if isGoal == true then
-        currentNode = node.parent
-        table.insert(self.goalPath,{x = self.realGoalLocation.x,y = self.realGoalLocation.y, z = self.realGoalLocation.z})
+    local position = g_GridMap3D:getNodeLocation(node.gridNode)
+    if self.bReachedGoal then
+        position = {x = self.realGoalLocation.x,y = self.realGoalLocation.y, z = self.realGoalLocation.z}
     end
 
-    -- loop the linked nodes through the parent reference, inserting at the front of the self.goalPath
-    while currentNode.parent ~= nil do
-        if currentNode.gridNode[2] ~= -1 then
-            local xLoc,yLoc,zLoc = GridMap3DNode.getLeafVoxelLocation(currentNode.gridNode[1],currentNode.gridNode[2])
-            table.insert(self.goalPath,1,{x = xLoc,y = yLoc, z = zLoc})
+    table.insert(path,position)
+    local currentNode = node.parent
+
+    -- edge case where the goal is within the same grid as start
+    if currentNode == nil then
+        table.insert(path,{x = self.realStartLocation.x,y = self.realStartLocation.y, z = self.realStartLocation.z })
+    end
+
+    while currentNode ~= nil do
+
+        if currentNode.gridNode == self.startGridNode then
+            table.insert(path,{x = self.realStartLocation.x,y = self.realStartLocation.y, z = self.realStartLocation.z })
+            break
         else
-            table.insert(self.goalPath,1,{x = currentNode.gridNode[1].positionX,y = currentNode.gridNode[1].positionY, z = currentNode.gridNode[1].positionZ})
+            position = g_GridMap3D:getNodeLocation(currentNode.gridNode)
+            table.insert(path,position)
         end
         currentNode = currentNode.parent
     end
-    -- lastly inserting the first location which is the given start location for the path search
-    table.insert(self.goalPath,1,{x = self.realStartLocation.x,y = self.realStartLocation.y, z = self.realStartLocation.z})
-    return
+
+    self:reversePath(path)
 end
+
+--- postProcessPath called to reverse the found path so it goes from start->end, and also removes some zigzag found in the path.
+--@param node is the final node that was reached.
+function AStar:postProcessPath(node)
+
+    if node == nil or g_GridMap3D == nil then
+        return
+    end
+
+    local path = {}
+
+    local firstPosition = g_GridMap3D:getNodeLocation(node.gridNode)
+
+    if self.bReachedGoal then
+        firstPosition = self.realGoalLocation
+    end
+    table.insert(path,firstPosition)
+
+    local firstNode = node
+    local secondNode = node.parent
+    local thirdNode = nil
+    if secondNode ~= nil then
+        thirdNode = secondNode.parent
+    end
+
+    if secondNode == nil or thirdNode == nil then -- edge case where goal was in same grid as start or the next node
+        table.insert(path,{x = self.realStartLocation.x,y = self.realStartLocation.y, z = self.realStartLocation.z })
+    else
+
+        while thirdNode ~= nil do
+
+            if secondNode.gridNode == self.startGridNode then
+                table.insert(path,{x = self.realStartLocation.x,y = self.realStartLocation.y, z = self.realStartLocation.z })
+                break
+            end
+
+            local secondPosition = g_GridMap3D:getNodeLocation(secondNode.gridNode)
+            local bIsLast = thirdNode.gridNode == self.startGridNode
+            local thirdPosition = g_GridMap3D:getNodeLocation(thirdNode.gridNode)
+            if bIsLast then
+                thirdPosition = self.realStartLocation
+            end
+
+            -- do a raycast to check if middle node can be left out of path
+            local directionX,directionY,directionZ = MathUtil.vector3Normalize(thirdPosition.x - firstPosition.x,thirdPosition.y - firstPosition.y,thirdPosition.z - firstPosition.z)
+            local distance = MathUtil.vector3Length(thirdPosition.x - firstPosition.x,thirdPosition.y - firstPosition.y,thirdPosition.z - firstPosition.z)
+            self.bTraceBlocked = false
+            raycastClosest(firstPosition.x,firstPosition.y,firstPosition.z,directionX,directionY,directionZ,"pathTraceCallback",distance,self,CollisionFlag.STATIC_WORLD)
+
+            if self.bTraceBlocked then
+
+                table.insert(path,secondPosition)
+
+                -- in case the second node was blocked then next raycast will be made from that node
+                firstNode = secondNode
+                firstPosition = g_GridMap3D:getNodeLocation(firstNode.gridNode)
+            end
+
+            secondNode = thirdNode
+            thirdNode = secondNode.parent
+
+            if bIsLast then
+                table.insert(path,thirdPosition)
+                break
+            end
+        end
+    end
+
+    self:reversePath(path)
+end
+
+--- reversePath is called after linked list is made into an array but the path is in reverse, so this corrects it.
+--@param path is an array of {x=,y=,z=} positions from goal to start.
+function AStar:reversePath(path)
+    if path == nil then
+        return
+    end
+    self.goalPath = {}
+
+    for i = #path, 1, -1 do
+        table.insert(self.goalPath,path[i])
+    end
+
+end
+
+--- pathTraceCallback is raycastClosest callback to check if found path can be smoothed.
+--@param hitObjectId id of the hit static object.
+function AStar:pathTraceCallback(hitObjectId)
+
+    if hitObjectId < 1 then
+        return true
+    else
+        -- set that trace was blocked so can't remove middle node from between
+        self.bTraceBlocked = true
+        return false
+    end
+
+end
+
 
 --- isClosed is called to check if a given gridNode is already in the closed list.
 --@param gridNode is the {GridMap3DNode,leafVoxelIndex (-1 - 63)} that needs to be checked.
@@ -961,7 +1055,6 @@ function AStar:addToClosed(node)
 
     -- The node's gridNode is added into the closed list, as the AStarNode's variable aren't need in there.
     self.closed[node.gridNode[1]][node.gridNode[2]] = node.gridNode
-
     self.closedNodeCount = self.closedNodeCount + 1
 end
 
@@ -985,81 +1078,73 @@ end
 --@param node1 is the second grid node of type {GridMap3DNode,leafVoxelIndex (-1 - 63)} table.
 --@return a distance between the two nodes.
 function AStar:getHeuristic(node1,node2)
-    if node1 == nil or node2 == nil or node1[1] == nil or node2[1] == nil then
+    if node1 == nil or node2 == nil or node1[1] == nil or node2[1] == nil or g_GridMap3D == nil then
         return 0
     end
 
-    local positionX,positionY,positionZ = node1[1].positionX, node1[1].positionY, node1[1].positionZ
-    local positionX2,positionY2,positionZ2 = node2[1].positionX, node2[1].positionY, node2[1].positionZ
+    local position = g_GridMap3D:getNodeLocation(node1)
+    local position2 = g_GridMap3D:getNodeLocation(node2)
 
-    if node1[2] > -1 then
-        positionX, positionY, positionZ = GridMap3DNode.getLeafVoxelLocation(node1[1],node1[2])
-    end
-
-    if node2[2] > -1 then
-        positionX2, positionY2, positionZ2 = GridMap3DNode.getLeafVoxelLocation(node2[1],node2[2])
-    end
-
-    return AStar.euclideanDistance(positionX,positionY,positionZ,positionX2,positionY2,positionZ2) * AStar.getHeuristicScaling(node1)
+    -- scaling additionally with 1.5 to pivot even more on the estimated
+    return 1.5 * (MathUtil.vector3Length(position.x - position2.x,position.y - position2.y,position.z - position2.z) * self:getHeuristicScaling(node1))
 end
 
 --- getHeuristicScaling is used to get scaling value for adding higher cost for higher resolution nodes.
 --@param node is from which the scaling is received from, grid node is of type {GridMap3DNode,leafVoxelIndex (-1 - 63)} table.
-function AStar.getHeuristicScaling(node)
-    if g_GridMap3D == nil or node == nil or node[1] == nil then
+function AStar:getHeuristicScaling(node)
+    if g_GridMap3D == nil or g_GridMap3D.nodeTree == nil or node == nil or node[1] == nil then
         return
     end
 
-    local layerScaling = g_GridMap3D:getNodeTreeLayer(node[1].size)
-
-    -- if is in a leaf voxel then +1, as giving leaf node size to getNodeTreeLayer does not count leaf voxels as a layer.
+    local size = node[1].size
     if node[2] > -1 then
-        layerScaling = layerScaling + 1
+        size = g_GridMap3D.maxVoxelResolution
     end
 
-    return layerScaling
+    size = MathUtil.clamp(size,1,self.heuristicScalingMaxSize)
+
+    return math.log(g_GridMap3D.nodeTree.size / size,2)
 end
 
---- Helper function to calculate euclidean distance between two points
--- returns the distance between given two points.
-function AStar.euclideanDistance(x1, y1, z1, x2, y2, z2)
-  -- Return the square root of the sum of the squares of the differences between the coordinates
-  return math.sqrt(math.pow((x1 - x2),2) + math.pow((y1 - y2),2) + math.pow((z1 - z2),2))
-end
-
---- addToOpen called to try add a new AStarNode into the open queue, checks first if it is possible.
---@param is the AStarNode to try to be added into the open queue.
-function AStar:addToOpen(newNode)
-    if newNode == nil then
+--- openNode called to try add a new AStarNode into the open queue, checks first if it is possible.
+--@param parent is the previous AStarNode.
+--@param gridNode is the octree {GridMap3DNode,leafVoxelIndex(-1 - 63)} node this AStarNode presents.
+--@param direction is the direction taken from previous to this node.
+function AStar:openNode(parent,gridNode,direction)
+    if gridNode == nil or gridNode[1] == nil then
         return
     end
 
-    if self:checkgridNodePossibility(newNode.gridNode) == false then
+    if self:checkgridNodePossibility(gridNode) == false then
         return
     end
 
-    self.open:insert(newNode)
+    self.open:insert(self:prepareNewNode(parent,gridNode,direction))
 end
 
 --- checkGridNodePossiblity is used to check if the given gridNode is a possible next location in the path.
 --@param gridNode is the grid node to be checked if is not solid or closed, of type {GridMap3DNode,leafVoxelIndex (-1 - 63)} table.
+--@return true if given node can be opened up.
 function AStar:checkgridNodePossibility(gridNode)
 
     if gridNode == nil or gridNode[1] == nil or self:isClosed(gridNode) then
         return false
     end
 
-    -- if it is the goal have to add it into the open
+    local isGoal = false
+    -- if it is the goal have to add it into the open if bool allows blocked nodes too if was solid.
     if self:isSameGridNode(gridNode,self.goalGridNode) then
-        return true
+        isGoal = true
     end
 
     -- if it is a leaf node need to check if the leaf node is not full solid and if it is within a leaf voxel that the leaf voxel is not solid.
     if GridMap3DNode.isLeaf(gridNode[1]) then
-        if GridMap3DNode.isLeafFullSolid(gridNode[1]) then
-            return false
-        elseif gridNode[2] > -1 and GridMap3DNode.isLeafVoxelSolidAt(gridNode[1],gridNode[2]) then
-            return false
+        if GridMap3DNode.isLeafFullSolid(gridNode[1]) or gridNode[2] > -1 and GridMap3DNode.isNodeSolid(gridNode) then
+            if isGoal and self.allowSolidGoal then
+                return true
+            else
+                return false
+            end
         end
 
     else

@@ -4,9 +4,11 @@
 
 ## Description
 
-This is a set of scripts for Farming Simulator 22, which provides access to a 3D octree of the game map. 
-Includes an A* pathfinding algorithm to pathfind within the game world.
-Also a functionality to make a catmull-rom using CatmullRomSplineCreator object class.
+This is a set of scripts for Farming Simulator 22, which provides access to the following: 
+- 3D octree grid, of static objects, such as buildings.
+- A* pathfinding algorithm to pathfind within the game world.
+- Catmull-rom using CatmullRomSplineCreator object class.
+
 This is not a standalone mod, this does not do any gameplay functionality except provide some classes for use in other mods.
 
 ## Features
@@ -16,6 +18,28 @@ Currently features octree generation, A* pathfinding class and catmull-rom class
 ## Installation
 
 Place the flyPathfinding folder into mod folder's "scripts" folder. 
+
+If debug commands needed then modDesc.xml needs the following input and actions:
+And their translation for the actions in the l10n file.
+```
+<inputBinding>
+ <actionBinding action="FLYPATHFINDING_DBG_PREVIOUS">
+  <binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_lshift KEY_lalt KEY_KP_minus" />
+ </actionBinding>
+ <actionBinding action="FLYPATHFINDING_DBG_NEXT">
+	 <binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_lshift KEY_lalt KEY_KP_plus" />
+ </actionBinding>
+ <actionBinding action="FLYPATHFINDING_DBG_ASTAR_SHOW_CLOSEDNODES">
+	 <binding device="KB_MOUSE_DEFAULT" input="KEY_lctrl KEY_lshift KEY_lalt KEY_c" />
+	</actionBinding>
+</inputBinding>
+
+<actions>
+ <action name="FLYPATHFINDING_DBG_PREVIOUS" />
+ <action name="FLYPATHFINDING_DBG_NEXT" />
+ <action name="FLYPATHFINDING_DBG_ASTAR_SHOW_CLOSEDNODES" />
+</actions>
+```
 
 ## Usage
 
@@ -62,8 +86,8 @@ The version is configured in the config.xml, and GridMap3D has the function Grid
 
 ## Issues
 
-Does not work on modded maps with non-original map size, so larger than 2048. 
-I think it is an issue with the FS22 LUA API's overlapBox collision check function.
+Does not work on modded maps with non-original map size, so larger than 2048, I think it is an issue with the FS22 LUA API's overlapBox collision check function.
+
 Did not see any possiblity to avoid including very thin meshes near terrain like the roads in the octree grid as solid, could cut some generation time by a good solution.
 
 ## Changelog

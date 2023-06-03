@@ -1,14 +1,10 @@
 --[[
-This file is part of Fly Pathfinding Mod (https://github.com/DennisB97/FS22FlyPathfinding)
-MIT License
+This file is part of set of scripts enabling 3D pathfinding in FS22 (https://github.com/DennisB97/FS22FlyPathfinding)
+
 Copyright (c) 2023 Dennis B
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+of this mod and associated files, to copy, modify ,subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -21,9 +17,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-This mod is for personal use only and is not affiliated with GIANTS Software or endorsed by the game developer.
-Selling or distributing this mod for a fee or any other form of consideration is prohibited by the game developer's terms of use and policies.
-Please refer to the game developer's website for more information.
 ]]
 
 
@@ -271,6 +264,12 @@ function GridMap3DStateGenerate:enter()
         local rootNode = GridMap3DNode.new(0,self.owner.terrainSize / 2,0,nil,self.owner.terrainSize)
         self.owner.nodeTree = rootNode
         table.insert(self.currentLayerNodes,rootNode)
+
+        -- if dedicated then skips preloop and goes to create
+        if g_currentMission ~= nil and g_currentMission.connectedToDedicatedServer then
+            self.currentState = self.EInternalState.CREATE
+        end
+
     end
 
 end
@@ -310,26 +309,38 @@ function GridMap3DStateGenerate:update(dt)
         return
     end
 
-    -- initially once on game start in PRELOOP state, where a certain amount of the octree is created immediately (gets stuck for few seconds on loading screen after enter is pressed)
-    if self.currentState == self.EInternalState.PRELOOP then
-        self:preLoop()
-        return
-    end
+    -- on dedicated the grid will be generated much faster
+    if g_currentMission ~= nil and g_currentMission.connectedToDedicatedServer then
+        -- accumulate time
+        self.generationTime = self.generationTime + (dt / 1000)
+        for i = 0, 30000 do
+            if self:iterateOctree() then
+                self:finishGrid()
+                return
+            end
+        end
+    else
 
-    -- accumulate time
-    self.generationTime = self.generationTime + (dt / 1000)
-
-    if self.currentState == self.EInternalState.FINISH then
-        self:finishGrid()
-    end
-
-    -- Loop through the creation n times per update
-    for i = 0, self.owner.maxOctreeGenerationLoopsPerUpdate do
-        if self:iterateOctree() then
+        -- initially once on game start in PRELOOP state, where a certain amount of the octree is created immediately (gets stuck for few seconds on loading screen after enter is pressed)
+        if self.currentState == self.EInternalState.PRELOOP then
+            self:preLoop()
             return
         end
-    end
 
+        -- accumulate time
+        self.generationTime = self.generationTime + (dt / 1000)
+
+        if self.currentState == self.EInternalState.FINISH then
+            self:finishGrid()
+        end
+
+        -- Loop through the creation n times per update
+        for i = 0, self.owner.maxOctreeGenerationLoopsPerUpdate do
+            if self:iterateOctree() then
+                return
+            end
+        end
+    end
 
 end
 
@@ -886,7 +897,7 @@ function GridMap3DStateDebug:enter()
     end
 
     self.maxDebugLayer = self.owner:getNodeTreeLayer(self.owner.leafNodeResolution)
-    if g_inputBinding ~= nil then
+    if g_inputBinding ~= nil and InputAction.FLYPATHFINDING_DBG_PREVIOUS ~= nil then
         local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_PREVIOUS, self, self.decreaseDebugLayer, true, false, false, true, true, true)
         local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_NEXT, self, self.increaseDebugLayer, true, false, false, true, true, true)
     end

@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="utf-8" standalone="no" ?>
-<l10n>
-     <texts>
-        <text name="input_FLYPATHFINDING_DBG_PREVIOUS" text="Debug the previous" />
-        <text name="input_FLYPATHFINDING_DBG_NEXT" text="Debug the next" />
-        <text name="input_FLYPATHFINDING_DBG_ASTAR_SHOW_CLOSEDNODES" text="Toggle between showing path's closed nodes" />
-	</texts>
-</l10n>

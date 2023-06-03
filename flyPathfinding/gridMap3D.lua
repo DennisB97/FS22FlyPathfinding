@@ -1,14 +1,10 @@
 --[[
-This file is part of Fly Pathfinding Mod (https://github.com/DennisB97/FS22FlyPathfinding)
-MIT License
+This file is part of set of scripts enabling 3D pathfinding in FS22 (https://github.com/DennisB97/FS22FlyPathfinding)
+
 Copyright (c) 2023 Dennis B
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+of this mod and associated files, to copy, modify ,subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -21,9 +17,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-This mod is for personal use only and is not affiliated with GIANTS Software or endorsed by the game developer.
-Selling or distributing this mod for a fee or any other form of consideration is prohibited by the game developer's terms of use and policies.
-Please refer to the game developer's website for more information.
 ]]
 
 --- EDirections used when finding neighbours within the octree.
@@ -274,10 +267,6 @@ InitObjectClass(GridMap3D, "GridMap3D")
 --- new creates a new grid map 3d.
 --@param customMt optional customized base table.
 function GridMap3D.new(customMt)
-    if g_GridMap3D ~= nil then
-        return
-    end
-
     local self = Object.new(g_server ~= nil,g_client ~= nil, customMt or GridMap3D_mt)
     -- nodeTree will contain the root node of the octree which then has references to deeper nodes.
     self.nodeTree = {}
@@ -307,6 +296,7 @@ function GridMap3D.new(customMt)
     self.bBottomUnderTerrain = false
     self.collisionMask = CollisionFlag.STATIC_WORLD
     self.bGridGenerated = false
+    self.configFilename = "config/config.xml"
 
     -- Need to find the highest value in the messagetype , as own inserted ones need to be higher
     local messageTypeCount = 0
@@ -361,7 +351,7 @@ function GridMap3D:init()
     if g_currentMission ~= nil then
         -- overlapBox seems to have some bug with non default sized maps.
         if getTerrainSize(g_currentMission.terrainRootNode) ~= 2048 then
-            Logging.info("The FlyPathfinding mod does not work on non-default sized maps!")
+            Logging.info("The fly pathfinding does not work on non-default sized maps!")
             self.currentGridState = self.EGridMap3DStates.UNDEFINED
             return false
         end
@@ -374,24 +364,46 @@ function GridMap3D:init()
 end
 
 
-function GridMap3D:loadConfig()
-    local filePath = Utils.getFilename("config/config.xml", FlyPathfinding.modDir)
+--- getVersion called to get the version of pathfinding system.
+--@return float value which indicates version.
+function GridMap3D:getVersion()
+    local filePath = Utils.getFilename(self.configFilename, FlyPathfinding.modDir)
     local xmlFile = loadXMLFile("TempXML", filePath)
 
-    -- Multiplies the maxOctreePreLoops and maxOctreeGenerationLoopsPerUpdate if on dedicated server by this value
-    local dedicatedScalingFactor = nil
+    local version = "1.0.0"
+
+    if xmlFile ~= nil then
+        if getXMLString(xmlFile, "Config#version") ~= nil then
+            version = getXMLString(xmlFile,"Config#version")
+        end
+    end
+
+    return version
+end
+
+--- loadConfig called to setup the necessary variables from config.xml if found.
+function GridMap3D:loadConfig()
+    local filePath = Utils.getFilename(self.configFilename, FlyPathfinding.modDir)
+    local xmlFile = loadXMLFile("TempXML", filePath)
+
+--     -- Multiplies the maxOctreePreLoops and maxOctreeGenerationLoopsPerUpdate if on dedicated server by this value
+--     local dedicatedScalingFactor = nil
     -- Highest resolution leaf voxels in the octree, given in meters
     self.maxVoxelResolution = 1
     -- How many loops to do initially when loading into the game, helps to avoid creating the octree very long while the game is properly running.
     self.maxOctreePreLoops = 125000
     -- How many loops per update to generate the octree, HEAVILY affects performance.
     self.maxOctreeGenerationLoopsPerUpdate = 20
+    -- ignoreTrees if the grid should not include trees as solid
+    self.bIgnoreTrees = true
+    -- ignoreWater if the grid should not include water as solid
+    self.bIgnoreWater = true
 
     if xmlFile ~= nil then
 
-        if getXMLString(xmlFile, "Config.octreeConfig#dedicatedScalingFactor") ~= nil then
-            dedicatedScalingFactor = getXMLFloat(xmlFile,"Config.octreeConfig#dedicatedScalingFactor")
-        end
+--         if getXMLString(xmlFile, "Config.octreeConfig#dedicatedScalingFactor") ~= nil then
+--             dedicatedScalingFactor = getXMLFloat(xmlFile,"Config.octreeConfig#dedicatedScalingFactor")
+--         end
         if getXMLString(xmlFile, "Config.octreeConfig#maxVoxelResolution") ~= nil then
             self.maxVoxelResolution = getXMLFloat(xmlFile,"Config.octreeConfig#maxVoxelResolution")
         end
@@ -401,20 +413,31 @@ function GridMap3D:loadConfig()
         if getXMLString(xmlFile, "Config.octreeConfig#maxOctreeGenerationLoopsPerUpdate") ~= nil then
             self.maxOctreeGenerationLoopsPerUpdate = getXMLInt(xmlFile,"Config.octreeConfig#maxOctreeGenerationLoopsPerUpdate")
         end
+        if getXMLString(xmlFile, "Config.octreeConfig#ignoreTrees") ~= nil then
+            self.bIgnoreTrees = getXMLBool(xmlFile,"Config.octreeConfig#ignoreTrees")
+        end
+        if getXMLString(xmlFile, "Config.octreeConfig#ignoreWater") ~= nil then
+            self.bIgnoreWater = getXMLBool(xmlFile,"Config.octreeConfig#ignoreWater")
+        end
 
     end
 
-    if g_currentMission ~= nil and g_currentMission.connectedToDedicatedServer then
-        dedicatedScalingFactor = MathUtil.clamp(dedicatedScalingFactor or 4,1,10)
-    else
-        dedicatedScalingFactor = 1
-    end
+--     if g_currentMission ~= nil and g_currentMission.connectedToDedicatedServer then
+--         dedicatedScalingFactor = MathUtil.clamp(dedicatedScalingFactor or 4,1,10)
+--     else
+--         dedicatedScalingFactor = 1
+--     end
 
     -- leaf node is four times the size of the highest resolution, as leaf node contains the highest resolution in a 4x4x4 grid.
     self.leafNodeResolution = self.maxVoxelResolution * 4
 
-    self.maxOctreePreLoops = self.maxOctreePreLoops * dedicatedScalingFactor
-    self.maxOctreeGenerationLoopsPerUpdate = self.maxOctreeGenerationLoopsPerUpdate * dedicatedScalingFactor
+--     self.maxOctreePreLoops = self.maxOctreePreLoops * dedicatedScalingFactor
+--     self.maxOctreeGenerationLoopsPerUpdate = self.maxOctreeGenerationLoopsPerUpdate * dedicatedScalingFactor
+
+    -- if water should not be ignored adds it to the default static collisionmask
+    if not self.bIgnoreWater then
+        self.collisionMask = self.collisionMask + CollisionFlag.WATER
+    end
 
 end
 
@@ -722,6 +745,12 @@ function GridMap3D:clampToGrid(position)
         return position
     end
 
+    if self.nodeTree == nil or self.nodeTree.children == nil then
+        Logging.warning("GridMap3D:clampToGrid: encountered nil values!")
+        printCallstack()
+        return
+    end
+
     local gridMinX = self.nodeTree.children[1].positionX - (self.nodeTree.children[1].size / 2) + 0.1
     local gridMinY = self.nodeTree.children[1].positionY - (self.nodeTree.children[1].size / 2) + 0.1
     local gridMinZ = self.nodeTree.children[1].positionZ - (self.nodeTree.children[1].size / 2) + 0.1
@@ -947,6 +976,7 @@ function GridMap3D:voxelOverlapCheck(x,y,z, extentRadius)
 end
 
 --- voxelOverlapCheckCallback is callback function for the overlapBox.
+-- preferably would ignore roads and other thin objects close to terrain level but not sure if possible...
 -- Checks if there was any object id found, or if it was the terrain or if it was the boundary then can ignore those.
 -- If it wasn't any of the above then it checks if it has the ClassIds.SHAPE, if it does then it is counted as solid.
 --@param hitObjectId is the id of collided thing.
@@ -956,9 +986,12 @@ function GridMap3D:voxelOverlapCheckCallback(hitObjectId)
         return true
     end
 
-    -- ignores trees, preferably would ignore roads and other thin objects close to terrain level but not sure if possible...
-    if getHasClassId(hitObjectId,ClassIds.SHAPE) and bitAND(getCollisionMask(hitObjectId),CollisionFlag.TREE) ~= CollisionFlag.TREE
-        and bitAND(getCollisionMask(hitObjectId),CollisionFlag.WATER) ~= CollisionFlag.WATER then
+    if getHasClassId(hitObjectId,ClassIds.SHAPE) then
+
+        if bitAND(getCollisionMask(hitObjectId),CollisionFlag.TREE) == CollisionFlag.TREE and self.bIgnoreTrees then
+            return true
+        end
+
         self.bTraceVoxelSolid = true
         return false
     end
@@ -1223,8 +1256,8 @@ end
 -- Toggles the bOctreeDebug, which then when state goes to idle replcaes idle state with debug state.
 function GridMap3D:octreeDebugToggle()
 
-    if AStar.debugObject ~= nil then
-        Logging.info("Can't turn on octree debug at same time as AStarFlyPathfinding debug mode!")
+    if AStar.debugObject ~= nil or CatmullRomSplineCreator.debugObject ~= nil then
+        Logging.info("Can't turn on octree debug at same time as AStarFlyPathfinding or CatmullRom debug mode!")
         return
     end
 

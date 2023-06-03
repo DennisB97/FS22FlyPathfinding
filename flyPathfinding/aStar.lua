@@ -1,14 +1,10 @@
 --[[
-This file is part of Fly Pathfinding Mod (https://github.com/DennisB97/FS22FlyPathfinding)
-MIT License
+This file is part of set of scripts enabling 3D pathfinding in FS22 (https://github.com/DennisB97/FS22FlyPathfinding)
+
 Copyright (c) 2023 Dennis B
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+of this mod and associated files, to copy, modify ,subject to the following conditions:
 
 The above copyright notice and this permission notice shall be included in all
 copies or substantial portions of the Software.
@@ -21,9 +17,6 @@ LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
 OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 SOFTWARE.
 
-This mod is for personal use only and is not affiliated with GIANTS Software or endorsed by the game developer.
-Selling or distributing this mod for a fee or any other form of consideration is prohibited by the game developer's terms of use and policies.
-Please refer to the game developer's website for more information.
 ]]
 
 -- All the directions that pathfinding can take within the octree grid.
@@ -515,7 +508,7 @@ AStar_mt = Class(AStar,Object)
 InitObjectClass(AStar, "AStar")
 
 function AStar.aStarDebugToggle()
-    if g_GridMap3D == nil or g_GridMap3D.bOctreeDebug or CatmullRomSpline.debugObject then
+    if g_currentMission.gridMap3D == nil or g_currentMission.gridMap3D.bOctreeDebug or CatmullRomSpline.debugObject then
         Logging.info("Can't turn on AStar flypathfinding debug at same time as Octree debug mode or catmullrom!")
         return
     end
@@ -651,7 +644,7 @@ end
 --@return returns true if started searching for path without issues.
 function AStar:find(startPosition,goalPosition,findNearest,allowSolidStart,allowSolidGoal,callback,smoothPath,customPathLoopAmount,customSearchNodeLimit)
 
-    if g_GridMap3D == nil or startPosition == nil or goalPosition == nil or CatmullRomSpline.isNearlySamePosition(startPosition,goalPosition) then
+    if g_currentMission.gridMap3D == nil or startPosition == nil or goalPosition == nil or CatmullRomSpline.isNearlySamePosition(startPosition,goalPosition) then
         return false
     end
 
@@ -667,8 +660,8 @@ function AStar:find(startPosition,goalPosition,findNearest,allowSolidStart,allow
     self.maxPathfindLoops = (customPathLoopAmount or self.defaultMaxPathfindLoops) * self.dedicatedScalingFactor
     self.realStartLocation = startPosition
     self.realGoalLocation = goalPosition
-    self.startGridNode = g_GridMap3D:getGridNode(startPosition,allowSolidStart)
-    self.goalGridNode = g_GridMap3D:getGridNode(goalPosition,allowSolidGoal)
+    self.startGridNode = g_currentMission.gridMap3D:getGridNode(startPosition,allowSolidStart)
+    self.goalGridNode = g_currentMission.gridMap3D:getGridNode(goalPosition,allowSolidGoal)
     self.bFindNearest = (findNearest ~= nil and {findNearest} or {true})[1]
     self.callback = callback
 
@@ -896,13 +889,13 @@ end
 --@param node is last node reached on search.
 function AStar:collectFinalPath(node)
 
-    if node == nil or g_GridMap3D == nil then
+    if node == nil or g_currentMission.gridMap3D == nil then
         return
     end
 
     local path = {}
 
-    local position = g_GridMap3D:getNodeLocation(node.gridNode)
+    local position = g_currentMission.gridMap3D:getNodeLocation(node.gridNode)
     if self.bReachedGoal then
         position = {x = self.realGoalLocation.x,y = self.realGoalLocation.y, z = self.realGoalLocation.z}
     end
@@ -921,7 +914,7 @@ function AStar:collectFinalPath(node)
             table.insert(path,{x = self.realStartLocation.x,y = self.realStartLocation.y, z = self.realStartLocation.z })
             break
         else
-            position = g_GridMap3D:getNodeLocation(currentNode.gridNode)
+            position = g_currentMission.gridMap3D:getNodeLocation(currentNode.gridNode)
             table.insert(path,position)
         end
         currentNode = currentNode.parent
@@ -934,13 +927,13 @@ end
 --@param node is the final node that was reached.
 function AStar:postProcessPath(node)
 
-    if node == nil or g_GridMap3D == nil then
+    if node == nil or g_currentMission.gridMap3D == nil then
         return
     end
 
     local path = {}
 
-    local firstPosition = g_GridMap3D:getNodeLocation(node.gridNode)
+    local firstPosition = g_currentMission.gridMap3D:getNodeLocation(node.gridNode)
 
     if self.bReachedGoal then
         firstPosition = self.realGoalLocation
@@ -965,9 +958,9 @@ function AStar:postProcessPath(node)
                 break
             end
 
-            local secondPosition = g_GridMap3D:getNodeLocation(secondNode.gridNode)
+            local secondPosition = g_currentMission.gridMap3D:getNodeLocation(secondNode.gridNode)
             local bIsLast = thirdNode.gridNode == self.startGridNode
-            local thirdPosition = g_GridMap3D:getNodeLocation(thirdNode.gridNode)
+            local thirdPosition = g_currentMission.gridMap3D:getNodeLocation(thirdNode.gridNode)
             if bIsLast then
                 thirdPosition = self.realStartLocation
             end
@@ -984,7 +977,7 @@ function AStar:postProcessPath(node)
 
                 -- in case the second node was blocked then next raycast will be made from that node
                 firstNode = secondNode
-                firstPosition = g_GridMap3D:getNodeLocation(firstNode.gridNode)
+                firstPosition = g_currentMission.gridMap3D:getNodeLocation(firstNode.gridNode)
             end
 
             secondNode = thirdNode
@@ -1078,12 +1071,12 @@ end
 --@param node1 is the second grid node of type {GridMap3DNode,leafVoxelIndex (-1 - 63)} table.
 --@return a distance between the two nodes.
 function AStar:getHeuristic(node1,node2)
-    if node1 == nil or node2 == nil or node1[1] == nil or node2[1] == nil or g_GridMap3D == nil then
+    if node1 == nil or node2 == nil or node1[1] == nil or node2[1] == nil or g_currentMission.gridMap3D == nil then
         return 0
     end
 
-    local position = g_GridMap3D:getNodeLocation(node1)
-    local position2 = g_GridMap3D:getNodeLocation(node2)
+    local position = g_currentMission.gridMap3D:getNodeLocation(node1)
+    local position2 = g_currentMission.gridMap3D:getNodeLocation(node2)
 
     -- scaling additionally with 1.5 to pivot even more on the estimated
     return 1.5 * (MathUtil.vector3Length(position.x - position2.x,position.y - position2.y,position.z - position2.z) * self:getHeuristicScaling(node1))
@@ -1092,18 +1085,18 @@ end
 --- getHeuristicScaling is used to get scaling value for adding higher cost for higher resolution nodes.
 --@param node is from which the scaling is received from, grid node is of type {GridMap3DNode,leafVoxelIndex (-1 - 63)} table.
 function AStar:getHeuristicScaling(node)
-    if g_GridMap3D == nil or g_GridMap3D.nodeTree == nil or node == nil or node[1] == nil then
+    if g_currentMission.gridMap3D == nil or g_currentMission.gridMap3D.nodeTree == nil or node == nil or node[1] == nil then
         return
     end
 
     local size = node[1].size
     if node[2] > -1 then
-        size = g_GridMap3D.maxVoxelResolution
+        size = g_currentMission.gridMap3D.maxVoxelResolution
     end
 
     size = MathUtil.clamp(size,1,self.heuristicScalingMaxSize)
 
-    return math.log(g_GridMap3D.nodeTree.size / size,2)
+    return math.log(g_currentMission.gridMap3D.nodeTree.size / size,2)
 end
 
 --- openNode called to try add a new AStarNode into the open queue, checks first if it is possible.

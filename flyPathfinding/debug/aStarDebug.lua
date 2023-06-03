@@ -13,7 +13,7 @@ function AStarDebug.new()
     self.maxSavedDebugPaths = 10000
     self.bShowClosedNodes = false
 
-    if g_inputBinding ~= nil then
+    if g_inputBinding ~= nil and InputAction.FLYPATHFINDING_DBG_PREVIOUS ~= nil then
         local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_PREVIOUS, self, self.debugPreviousPath, true, false, false, true, true, true)
         local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_NEXT, self, self.debugNextPath, true, false, false, true, true, true)
         local _, _eventId = g_inputBinding:registerActionEvent(InputAction.FLYPATHFINDING_DBG_ASTAR_SHOW_CLOSEDNODES, self, self.toggleClosedNodes, true, false, false, true, true, true)
@@ -77,9 +77,9 @@ function AStarDebug:addPath(aStarSearchResult,closedNodes,closedNodeCount,timeTa
     local closed = {}
     for _,indexHolder in pairs(closedNodes) do
             for _,closedGridNode in pairs(indexHolder) do
-                if closedGridNode ~= nil and g_GridMap3D ~= nil then
-                    local position = g_GridMap3D:getNodeLocation(closedGridNode)
-                    table.insert(closed,{x=position.x,y=position.y,z=position.z,size=g_GridMap3D:getNodeSize(closedGridNode)})
+                if closedGridNode ~= nil and g_currentMission.gridMap3D ~= nil then
+                    local position = g_currentMission.gridMap3D:getNodeLocation(closedGridNode)
+                    table.insert(closed,{x=position.x,y=position.y,z=position.z,size=g_currentMission.gridMap3D:getNodeSize(closedGridNode)})
                 end
             end
     end
@@ -142,7 +142,7 @@ end
 --@param y2 the y2 coordinate of goal position.
 --@param z2 the z2 coordinate of goal position.
 function AStarDebug.aStarDebugPathCreate(debugClass,x,y,z,x2,y2,z2)
-    if x == nil or y == nil or z == nil or x2 == nil or y2 == nil or z2 == nil or g_GridMap3D == nil or g_GridMap3D:isAvailable() == false or AStar.debugObject == nil then
+    if x == nil or y == nil or z == nil or x2 == nil or y2 == nil or z2 == nil or g_currentMission.gridMap3D == nil or g_currentMission.gridMap3D:isAvailable() == false or AStar.debugObject == nil then
         return
     end
 

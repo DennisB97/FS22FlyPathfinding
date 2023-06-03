@@ -43,7 +43,7 @@ And their translation for the actions in the l10n file.
 
 ## Usage
 
-You can check if pathfinding is available with the FlyPathfinding.bPathfindingEnabled and checking if the octree object exists with ``` g_currentMission.gridMap3D ~= nil.```
+You can check if pathfinding is available with the ```FlyPathfinding.bPathfindingEnabled``` and checking if the octree object exists with ``` g_currentMission.gridMap3D ~= nil.```
 
 To check if the octree grid has been generated you can either call ```g_currentMission.gridMap3D:isAvailable()``` which returns a bool. 
 Can also bind to the ```g_messageCenter:subscribe(MessageType.GRIDMAP3D_GRID_GENERATED, "your function to call here", "function's self ref here")```

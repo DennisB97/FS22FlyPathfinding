@@ -1,10 +1,10 @@
-# FS22_FlyPathfinding
+# FS22 FlyPathfinding v1.0.0
 
 ![Debug visualizing a path that has been generated](https://i.gyazo.com/276cf7af27bb4457710b0a92254b1d4a.jpg)
 
 ## Description
 
-This is a mod for Farming Simulator 22, which provides access to a 3D octree of the game map. 
+This is a set of scripts for Farming Simulator 22, which provides access to a 3D octree of the game map. 
 Includes an A* pathfinding algorithm to pathfind within the game world.
 Also a functionality to make a catmull-rom using CatmullRomSplineCreator object class.
 This is not a standalone mod, this does not do any gameplay functionality except provide some classes for use in other mods.
@@ -15,16 +15,16 @@ Currently features octree generation, A* pathfinding class and catmull-rom class
 
 ## Installation
 
-Drop the zipped file into your FS22 mods folder as usual.
+Place the flyPathfinding folder into mod folder's "scripts" folder. 
 
 ## Usage
 
-You can check if this mod is available with the FS22_FlyPathfinding ~= nil and checking if the octree object exists by FS22_FlyPathfinding.g_GridMap3D ~= nil.
+You can check if pathfinding is available with the FlyPathfinding.bPathfindingEnabled and checking if the octree object exists by g_currentMission.gridMap3D ~= nil.
 
-To check if the octree grid has been generated you can either call FS22_FlyPathfinding.g_gridMap3D:isAvailable() which returns a bool.
-Can also bind on server to the g_messageCenter:subscribe(MessageType.GRIDMAP3D_GRID_GENERATED, "your function to call here", "function's self ref here")
+To check if the octree grid has been generated you can either call g_currentMission.gridMap3D:isAvailable() which returns a bool. 
+Can also bind to the g_messageCenter:subscribe(MessageType.GRIDMAP3D_GRID_GENERATED, "your function to call here", "function's self ref here")
 
-Can create the AStar pathfinding class by FS22_FlyPathfinding.AStar.new(isServer,isClient) and remembering to call :register(true) on the created object.
+Can create the AStar pathfinding class by AStar.new(isServer,isClient) and remembering to call :register(true) on the created object.
 Currently the AStar pathfinding can't be queued up with the function call astarobject:find before octree is ready, so need to wait till octree has generated the grid done by like above.
 
 After creating an AStar and making sure the grid is ready, one can start pathfinding using the find function.
@@ -56,7 +56,9 @@ CatmullRomSpline:getSplineInformationAtDistance(distance)
 Which returns the position, forward vector, right vector and upvector on the spline at given distance along the spline.
 
 The mod fully works in multiplayer. 
-While in single player the config.xml has the maxOctreePreLoops that can be adjusted for example, this affects the speed of creating the octree grid, after loading screen is done and entering game the pre loops will be run and will lag the game for a few seconds depending on the amount of maxOctreePreLoops. Helps a minute or so of the generation time while game is fully running, and the maxOctreeGenerationLoopsPerUpdate can be also lowered if performance is too low, while generating at the beginning the octree grid. In dedicated servers by default the dedicatedScalingFactor makes sure that the octree grid is fully generated when starting the dedicated server.   
+While in single player the config.xml has the maxOctreePreLoops that can be adjusted for example, this affects the speed of creating the octree grid, after loading screen is done and entering game the pre loops will be run and will lag the game for a few seconds depending on the amount of maxOctreePreLoops. Helps a minute or so of the generation time while game is fully running, and the maxOctreeGenerationLoopsPerUpdate can be also lowered if performance is too low, while generating at the beginning the octree grid. In dedicated servers the octree grid is fully generated when starting the dedicated server.   
+
+The version is configured in the config.xml, and GridMap3D has the function GridMap3D:getVersion() to check the existing grid's version.
 
 ## Issues
 

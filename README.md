@@ -43,46 +43,60 @@ And their translation for the actions in the l10n file.
 
 ## Usage
 
-You can check if pathfinding is available with the FlyPathfinding.bPathfindingEnabled and checking if the octree object exists by g_currentMission.gridMap3D ~= nil.
+You can check if pathfinding is available with the FlyPathfinding.bPathfindingEnabled and checking if the octree object exists with ``` g_currentMission.gridMap3D ~= nil.```
 
-To check if the octree grid has been generated you can either call g_currentMission.gridMap3D:isAvailable() which returns a bool. 
-Can also bind to the g_messageCenter:subscribe(MessageType.GRIDMAP3D_GRID_GENERATED, "your function to call here", "function's self ref here")
+To check if the octree grid has been generated you can either call ```g_currentMission.gridMap3D:isAvailable()``` which returns a bool. 
+Can also bind to the ```g_messageCenter:subscribe(MessageType.GRIDMAP3D_GRID_GENERATED, "your function to call here", "function's self ref here")```
 
-Can create the AStar pathfinding class by AStar.new(isServer,isClient) and remembering to call :register(true) on the created object.
-Currently the AStar pathfinding can't be queued up with the function call astarobject:find before octree is ready, so need to wait till octree has generated the grid done by like above.
+Can create the AStar pathfinding class by ```AStar.new(isServer,isClient)``` and remembering to call ```:register(true)``` on the created object.
+Currently the AStar pathfinding can't be queued up with the find function before octree is ready, so need to wait till octree has generated the grid done by like above.
 
 After creating an AStar and making sure the grid is ready, one can start pathfinding using the find function.
-AStar:find(startPosition,goalPosition,findNearest,allowSolidStart,allowSolidGoal,callback,smoothPath,customPathLoopAmount,customSearchNodeLimit)
-Where startPosition and goalPosition are given as tables {x=,y=,z=},
-findNearest a bool to indicate if goal wasn't reach to return the nearest found grid node if possible. 
-allowSolidStart and allowSolidGoal bool to allow start and goal being inside a collision.
-callback will be called when path is done, and will contain the path like {array of {x=,y=,z=}, bool reached goal}, returns {nil,false} if did not reach goal and findNearest was false or didn't have a best node.
-customPathLoopAmount indicates how many loops per frame to pathfind, if not given uses value from config.xml.
-customSearchNodeLimit can limit how many closed nodes will search through before cancelling search, also if not given uses value from config.xml.
+```AStar:find(startPosition,goalPosition,findNearest,allowSolidStart,allowSolidGoal,callback,smoothPath,customPathLoopAmount,customSearchNodeLimit)```
 
-Can create a catmull-rom by first creating the CatmullRomSplineCreator.new(isServer,isClient) and remembering to call :register(true) on the created object.
+- **startPosition** and **goalPosition** are given as tables {x=,y=,z=}
+
+- **findNearest** a bool to indicate if goal wasn't reach to return the nearest found grid node if possible. 
+
+- **allowSolidStart** and **allowSolidGoal** bool to allow start and goal being inside a collision.
+
+- **callback** will be called when path is done, and will contain the path like {array of {x=,y=,z=}, bool reached goal}, returns {nil,false} if did not reach goal and findNearest was false or didn't have a best node.
+
+- **smoothPath** is a bool to indicate if the found path should be smoothed with the included simple method to avoid zigzag pattern.
+
+- **customPathLoopAmount** indicates how many loops per frame to pathfind, if not given uses value from config.xml.
+
+- **customSearchNodeLimit** can limit how many closed nodes will search through before cancelling search, also if not given uses value from config.xml.
+
+
+Can create a catmull-rom by first creating the ```CatmullRomSplineCreator.new(isServer,isClient)``` and remembering to call ```:register(true)``` on the created object.
 Then the CatmullRomSplineCreator object has function:
-CatmullRomSplineCreator:createSpline(points,callback,customStartControlPoint,customEndControlPoint,lastDirection,roundSharpAngles,roundSharpAngleLimit,roundConnectionRadius,segment)
-points is an array of {x=,y=,z=} minimum of 2 points needed to create a spline.
-callback is a function to be called after spline is created and gives the created CatmullRomSpline as argument. 
-customStartControlPoint and customEndControlPoint are optional P0 first segment, and P3 last segment's points given as {x=,y=,z=}.
-lastDirection is optional direction that a previous spline was going towards on last segment, if combining two splines without using the combineSplinesAtDistance function.
-roundSharpAngles is a bool to indicate if sharp angles beyond the roundSharpAngleLimit should be rounded a bit by the roundConnectionRadius
+
+```CatmullRomSplineCreator:createSpline(points,callback,customStartControlPoint,customEndControlPoint,lastDirection,roundSharpAngles,roundSharpAngleLimit,roundConnectionRadius)```
+
+- **points** is an array of {x=,y=,z=} minimum of 2 points needed to create a spline.
+- **callback** is a function to be called after spline is created and gives the created CatmullRomSpline as argument. 
+- **customStartControlPoint** and **customEndControlPoint** are optional P0 first segment, and P3 last segment's points given as {x=,y=,z=}.
+- **lastDirection** is optional direction that a previous spline was going towards on last segment, if combining two splines without using the combineSplinesAtDistance function.
+- **roundSharpAngles** is a bool to indicate if sharp angles beyond the **roundSharpAngleLimit** should be rounded a bit by the **roundConnectionRadius**
 
 Two splines can be combined with the:
-CatmullRomSplineCreator:combineSplinesAtDistance(spline1,spline2,distance,callback,roundSharpAngles,roundSharpAngleLimit,roundConnectionRadius)
-spline1 and spline2 are the splines to be combined the spline2 will be used up and should be nilled and not used anymore. 
-distance is the distance at the spline to combine the two splines.
-callback is the function which will be called when the splines have been combined, returns the spline1 combined.
+
+```CatmullRomSplineCreator:combineSplinesAtDistance(spline1,spline2,distance,callback,roundSharpAngles,roundSharpAngleLimit,roundConnectionRadius)```
+
+- **spline1** and **spline2** are the splines to be combined the spline2 will be used up and should be nilled and not used anymore. 
+- **distance** is the distance at the spline to combine the two splines.
+- **callback** is the function which will be called when the splines have been combined, returns the spline1 combined.
 
 The created spline CatmullRomSpline has mainly the function:
-CatmullRomSpline:getSplineInformationAtDistance(distance)
-Which returns the position, forward vector, right vector and upvector on the spline at given distance along the spline.
+
+```CatmullRomSpline:getSplineInformationAtDistance(distance)```
+Which returns the **position**, **forward vector**, **right vector** and **upvector** on the spline at given distance along the spline as tables {x=,y=,z=}.
 
 The mod fully works in multiplayer. 
-While in single player the config.xml has the maxOctreePreLoops that can be adjusted for example, this affects the speed of creating the octree grid, after loading screen is done and entering game the pre loops will be run and will lag the game for a few seconds depending on the amount of maxOctreePreLoops. Helps a minute or so of the generation time while game is fully running, and the maxOctreeGenerationLoopsPerUpdate can be also lowered if performance is too low, while generating at the beginning the octree grid. In dedicated servers the octree grid is fully generated when starting the dedicated server.   
+While in single player the config.xml has the **maxOctreePreLoops** that can be adjusted for example, this affects the speed of creating the octree grid, after loading screen is done and entering game the pre loops will be run and will lag the game for a few seconds depending on the amount of **maxOctreePreLoops**. Helps a minute or so of the generation time while game is fully running, and the **maxOctreeGenerationLoopsPerUpdate** can be also lowered if performance is too low, while generating at the beginning the octree grid. In dedicated servers the octree grid is fully generated when starting the dedicated server.   
 
-The version is configured in the config.xml, and GridMap3D has the function GridMap3D:getVersion() to check the existing grid's version.
+The version is configured in the config.xml, and GridMap3D has the function ```GridMap3D:getVersion()``` to check the existing grid's version.
 
 ## Issues
 

@@ -10,6 +10,7 @@ This is a set of scripts for Farming Simulator 22, which provides access to the 
 - Catmull-rom using CatmullRomSplineCreator object class.
 
 This is not a standalone mod, this does not do any gameplay functionality except provide some classes for use in other mods.
+The version refers only to the Grid classes as the grid is the only thing shared between mods.
 
 ## Features
 
@@ -96,7 +97,10 @@ Which returns the **position**, **forward vector**, **right vector** and **upvec
 The mod fully works in multiplayer. 
 While in single player the config.xml has the **maxOctreePreLoops** that can be adjusted for example, this affects the speed of creating the octree grid, after loading screen is done and entering game the pre loops will be run and will lag the game for a few seconds depending on the amount of **maxOctreePreLoops**. Helps a minute or so of the generation time while game is fully running, and the **maxOctreeGenerationLoopsPerUpdate** can be also lowered if performance is too low, while generating at the beginning the octree grid. In dedicated servers the octree grid is fully generated when starting the dedicated server.   
 
-The version is configured in the config.xml, and GridMap3D has the function ```GridMap3D:getVersion()``` to check the existing grid's version.
+The version is configured in the flyPathfinding.lua as ```FlyPathfinding.requiredGridVersion```, and GridMap3D has the function ```GridMap3D:getVersion()``` to check the existing grid's version.
+In config/config.xml can be found variables to adjust AStar, CatmullRom performance. 
+The grid settings has default values inside the .zip in config/config.xml, but after running the script once it creates config.xml in a more easy location for the end-user at modSettings/flyPathfinding/config.xml
+As the grid is shared between mods it required to have its settings in a common location.
 
 ## Issues
 

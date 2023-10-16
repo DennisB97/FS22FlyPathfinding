@@ -1,4 +1,4 @@
-# FS22 FlyPathfinding v1.0.0
+# FS22 FlyPathfinding v1.0.1
 
 ![Debug visualizing a path that has been generated](https://i.gyazo.com/276cf7af27bb4457710b0a92254b1d4a.jpg)
 
@@ -19,6 +19,7 @@ Currently features octree generation, A* pathfinding class and catmull-rom class
 ## Installation
 
 Place the flyPathfinding folder into mod folder's "scripts" folder. 
+Add the script files included to the modDesc.xml 
 
 If debug commands needed then modDesc.xml needs the following input and actions:
 And their translation for the actions in the l10n file.
@@ -41,6 +42,7 @@ And their translation for the actions in the l10n file.
  <action name="FLYPATHFINDING_DBG_ASTAR_SHOW_CLOSEDNODES" />
 </actions>
 ```
+Also for the debug commands a custom name is required in the flyPathfinding.lua.
 
 ## Usage
 
@@ -109,6 +111,12 @@ Does not work on modded maps with non-original map size, so larger than 2048, I 
 Did not see any possiblity to avoid including very thin meshes near terrain like the roads in the octree grid as solid, could cut some generation time by a good solution.
 
 ## Changelog
+
+1.0.1
+- fixed bugs with AStar class, and grid update function. 
+- small other improvements and cleanup. 
+- added new functions to CatmullRomSpline class used for proper steering along the spline. 
+
 
 1.0.0 initial release.
 
